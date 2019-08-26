@@ -28,14 +28,15 @@ Class biga {
         if (!IsObject(para_collection)) {
             stringFoundVar := InStr(para_collection, para_value, this.caseSensitive, para_fromIndex)
             if (stringFoundVar == 0) {
+                ; msgbox, % "returning false for: " para_value
                 return false
             } else {
                 return true
             }
         } else {
             loop, % para_collection.MaxIndex() {
-                if (para_fromIndex > A_Index) {
-                    if (para_collection[A_Index] == para_value) {
+                if (para_fromIndex <= A_Index) {
+                    if (para_collection[A_Index] = para_value) {
                         return true
                     }
                 }
