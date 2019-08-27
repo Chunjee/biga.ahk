@@ -1,4 +1,4 @@
-Class biga {
+﻿Class biga {
 
 	__New() {
         this.info_Array
@@ -11,14 +11,26 @@ Class biga {
     ; \--/--\--/--\--/--\--/--\--/
 
     filter(para_collection,para_func) {
-        global
-        if (!IsObject(para_collection)) {
-            return false
-        }
         this.info_Array := []
         Loop, % para_collection.MaxIndex() {
-            if (%para_func%(para_collection[A_Index])) {
-                this.info_Array.push(para_collection[A_Index])
+            if (IsFunc(para_func)) {
+                if (%para_func%(para_collection[A_Index])) {
+                    this.info_Array.push(para_collection[A_Index])
+                }
+            }
+            if (para_func is string) {
+                if (para_collection[A_Index][para_func]) {
+                    this.info_Array.push(para_collection[A_Index])
+                }
+            }
+            if (para_func.Count() > 0) {
+                for Key, Value in para_func {
+                    msgbox, % Key
+                    msgbox, % Value
+                    if (para_collection[A_Index][para_func]) {
+                        this.info_Array.push(para_collection[A_Index])
+                    }
+                }
             }
         }
         return this.info_Array
@@ -28,7 +40,6 @@ Class biga {
         if (!IsObject(para_collection)) {
             stringFoundVar := InStr(para_collection, para_value, this.caseSensitive, para_fromIndex)
             if (stringFoundVar == 0) {
-                ; msgbox, % "returning false for: " para_value
                 return false
             } else {
                 return true
@@ -58,7 +69,28 @@ Class biga {
         }
     }
 
-    merge(para_) {
+    map(para_collection,para_iteratee) {
+        this.info_Array := []
+        Loop, % para_collection.MaxIndex() {
+            if (IsFunc(para_iteratee)) {
+                    this.info_Array.push(%para_iteratee%(para_collection[A_Index]))
+            }
+            if (para_iteratee is string) {
+                this.info_Array.push(para_collection[A_Index][para_iteratee])
+            }
+        }
+        return this.info_Array
+    }
+
+    matches(para_source) {
+        fn_array := []
+        fn := Func("dothis")
+        For Key, Value in para_source {
+
+        }
+    }
+
+    merge() {
 
     }
 
