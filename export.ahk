@@ -132,7 +132,22 @@
         return % this.info_Array
     }
 
-
+    uniq(para_collection) {
+        global
+        if (!IsObject(para_collection)) {
+            return false
+        }
+        dummy_Array := []
+        this.info_Array := []
+        Loop, % para_collection.MaxIndex() {
+            printedelement := MD5(Array_Print(para_collection[A_Index]))
+            if (this.indexOf(dummy_Array,printedelement) == -1) {
+                dummy_Array.push(printedelement)
+                this.info_Array.push(para_collection[A_Index])
+            }
+        }
+        return this.info_Array
+    }
 
     ; /--\--/--\--/--\--/--\--/--\
     ; String functions

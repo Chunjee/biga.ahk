@@ -1,6 +1,7 @@
 #Include export.ahk
 #Include ..\unit-testing.ahk\export.ahk
-#Include ..\arraygui.ahk\export.ahk
+#Include ..\util-array.ahk\export.ahk
+#Include ..\util-misc.ahk\export.ahk
 #NoTrayIcon
 #SingleInstance, force
 
