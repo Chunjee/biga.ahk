@@ -1,4 +1,4 @@
-﻿Class biga {
+Class biga {
 
 	__New() {
         this.info_Array
@@ -90,13 +90,22 @@
         }
     }
 
-    merge() {
-
+    merge(objs*) {
+        res := objs[1]
+        for i, obj in objs {
+            if(A_Index = 1) {
+                Continue 
+            }
+            res := this.internal_Merge(res, obj)
+        }
+        return res
     }
+    
 
     orderBy() {
 
     }
+
 
     reverse(para_collection) {
         if (!IsObject(para_collection)) {
@@ -108,6 +117,7 @@
         }
         return % this.info_Array
     }
+
 
     sampleSize(para_collection,para_SampleSize) {
         if (!IsObject(para_collection)) {
@@ -131,6 +141,7 @@
         }
         return % this.info_Array
     }
+
 
     uniq(para_collection) {
         global
@@ -171,5 +182,34 @@
             }
         }
         return -1
+    }
+
+    internal_Merge(obj1, obj2) {
+        if(!IsObject(obj1) && !IsObject(obj2)) {
+
+            ; if only one OR the other exist, display them together. 
+            if(obj1 = "" || obj2 = "") {
+                return obj2 obj1
+            }
+            ; if both are the same thing, return one of them only 
+            if (obj1 = obj2)
+                return obj1
+            ; otherwise, return them together as an object. 
+            return [obj1, obj2]
+        }
+
+        ; initialize an associative array
+        combined := {}
+
+        for key, val in obj1 {
+            combined[key] := this.internal_Merge(val, obj2[key])
+        }
+
+        for key, val in obj2 {
+            if(!combined.HasKey(key)) {
+                combined[key] := val
+            }
+        }
+        return combined
     }
 }
