@@ -10,6 +10,11 @@ Class biga {
     ; Array functions
     ; \--/--\--/--\--/--\--/--\--/
 
+
+    ; /--\--/--\--/--\--/--\--/--\
+    ; Collection functions
+    ; \--/--\--/--\--/--\--/--\--/
+
     filter(para_collection,para_func) {
         this.info_Array := []
         Loop, % para_collection.MaxIndex() {
@@ -90,9 +95,9 @@ Class biga {
         }
     }
 
-    merge(objs*) {
-        res := objs[1]
-        for i, obj in objs {
+    merge(para_collections*) {
+        res := para_collections[1]
+        for i, obj in para_collections {
             if(A_Index = 1) {
                 Continue 
             }
@@ -151,7 +156,7 @@ Class biga {
         dummy_Array := []
         this.info_Array := []
         Loop, % para_collection.MaxIndex() {
-            printedelement := MD5(Array_Print(para_collection[A_Index]))
+            printedelement := MD5(this.objPrint(para_collection[A_Index]))
             if (this.indexOf(dummy_Array,printedelement) == -1) {
                 dummy_Array.push(printedelement)
                 this.info_Array.push(para_collection[A_Index])
@@ -184,32 +189,71 @@ Class biga {
         return -1
     }
 
-    internal_Merge(obj1, obj2) {
-        if(!IsObject(obj1) && !IsObject(obj2)) {
+    internal_Merge(para_collection1, para_collection2) {
+        if(!IsObject(para_collection1) && !IsObject(para_collection2)) {
 
             ; if only one OR the other exist, display them together. 
-            if(obj1 = "" || obj2 = "") {
-                return obj2 obj1
+            if(para_collection1 = "" || para_collection2 = "") {
+                return para_collection2 para_collection1
             }
             ; if both are the same thing, return one of them only 
-            if (obj1 = obj2)
-                return obj1
+            if (para_collection1 = para_collection2)
+                return para_collection1
             ; otherwise, return them together as an object. 
-            return [obj1, obj2]
+            return [para_collection1, para_collection2]
         }
 
         ; initialize an associative array
         combined := {}
 
-        for key, val in obj1 {
-            combined[key] := this.internal_Merge(val, obj2[key])
+        for key, val in para_collection1 {
+            combined[key] := this.internal_Merge(val, para_collection2[key])
         }
 
-        for key, val in obj2 {
+        for key, val in para_collection2 {
             if(!combined.HasKey(key)) {
                 combined[key] := val
             }
         }
         return combined
+    }
+
+    printObj(para_obj) {
+        if this.internal_IsCircle(para_obj) {
+            throw { error: "Type Error", file: A_LineFile, line: A_LineNumber }
+        }
+        for Key, Value in para_obj {
+            if Key is not Number 
+            {
+                Output .= """" . Key . """:"
+            } else {
+                Output .= Key . ":"
+            }
+            if (IsObject(Value)) {
+                Output .= "[" . this.printObj(Value) . "]"
+            } else if (Value is not number) {
+                Output .= """" . Value . """"
+            }
+            else {
+                Output .= Value
+            }
+            
+            Output .= ", "
+        }
+        StringTrimRight, OutPut, OutPut, 2
+        Return OutPut
+    }
+
+    internal_IsCircle(para_obj, para_objs=0) {
+        if (!para_objs) {
+            para_objs := {}
+        }
+        for Key, Val in para_obj
+        {
+            if (IsObject(Val)&&(para_objs[&Val]||Array_IsCircle(Val,(para_objs,para_objs[&Val]:=1)))) {
+                return true
+            }
+        }
+        return false
     }
 }
