@@ -116,11 +116,11 @@ Class biga {
     }
 
     matches(para_source) {
-        fn_array := []
-        fn := Func("dothis")
-        For Key, Value in para_source {
+        ; fn_array := []
+        ; fn := Func("dothis")
+        ; For Key, Value in para_source {
 
-        }
+        ; }
     }
 
     merge(para_collections*) {
@@ -207,6 +207,21 @@ Class biga {
         return % output
     }
 
+
+    ; /--\--/--\--/--\--/--\--/--\
+    ; Util functions
+    ; \--/--\--/--\--/--\--/--\--/
+
+    isMatch(para_obj,para_iteratee) {
+        for Key, Value in para_iteratee {
+            if (para_obj[key] == Value) {
+                continue
+            } else {
+                return false
+            }
+        }
+        return true
+    }
 
     ; /--\--/--\--/--\--/--\--/--\
     ; Internal functions
