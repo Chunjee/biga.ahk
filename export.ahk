@@ -18,27 +18,54 @@ Class biga {
     filter(para_collection,para_func) {
         this.info_Array := []
         Loop, % para_collection.MaxIndex() {
-            if (IsFunc(para_func)) {
-                if (%para_func%(para_collection[A_Index])) {
-                    this.info_Array.push(para_collection[A_Index])
-                }
-            }
             if (para_func is string) {
                 if (para_collection[A_Index][para_func]) {
                     this.info_Array.push(para_collection[A_Index])
                 }
             }
-            if (para_func.Count() > 0) {
-                for Key, Value in para_func {
-                    msgbox, % Key
-                    msgbox, % Value
-                    if (para_collection[A_Index][para_func]) {
-                        this.info_Array.push(para_collection[A_Index])
-                    }
+            if (IsFunc(para_func)) {
+                if (%para_func%(para_collection[A_Index])) {
+                    this.info_Array.push(para_collection[A_Index])
                 }
             }
+            ; if (para_func.Count() > 0) {
+            ;     for Key, Value in para_func {
+            ;         msgbox, % Key
+            ;         msgbox, % Value
+            ;         if (para_collection[A_Index][para_func]) {
+            ;             this.info_Array.push(para_collection[A_Index])
+            ;         }
+            ;     }
+            ; }
         }
         return this.info_Array
+    }
+
+    find(para_collection,para_iteratee,para_fromindex := 1) {
+        Loop, % para_collection.MaxIndex() {
+            if (para_fromindex > A_Index) {
+                continue
+            }
+            if (para_iteratee is string) {
+                if (para_collection[A_Index][para_iteratee]) {
+                    return % para_collection[A_Index]
+                }
+            }
+            if (IsFunc(para_iteratee)) {
+                if (%para_iteratee%(para_collection[A_Index])) {
+                    return % para_collection[A_Index]
+                }
+            }
+            if (para_iteratee.Count() > 0) {
+                ; for Key, Value in para_func {
+                ;     msgbox, % Key
+                ;     msgbox, % Value
+                ;     if (para_collection[A_Index][para_func]) {
+                ;         return % this.info_Array.push(para_collection[A_Index])
+                ;     }
+                ; }
+            }
+        }
     }
 
     includes(para_collection,para_value,para_fromIndex := 1) {
@@ -51,10 +78,11 @@ Class biga {
             }
         } else {
             loop, % para_collection.MaxIndex() {
-                if (para_fromIndex <= A_Index) {
-                    if (para_collection[A_Index] = para_value) {
-                        return true
-                    }
+                if (para_fromIndex > A_Index) {
+                    continue
+                }
+                if (para_collection[A_Index] = para_value) {
+                    return true
                 }
             }
             return false
@@ -96,14 +124,18 @@ Class biga {
     }
 
     merge(para_collections*) {
-        res := para_collections[1]
+        result := para_collections[1]
         for i, obj in para_collections {
             if(A_Index = 1) {
                 Continue 
             }
-            res := this.internal_Merge(res, obj)
+            result := this.internal_Merge(result, obj)
         }
-        return res
+        return result
+    }
+
+    mergeWith(para_collection1,para_collection2,para_func) {
+
     }
     
 
