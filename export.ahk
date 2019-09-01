@@ -206,6 +206,26 @@ Class biga {
         output := StrReplace(l_string, para_needle, para_replacement, , this.limit)
         return % output
     }
+    
+    toLower(para_string) {
+        StringLower, OutputVar, para_string
+        return % OutputVar
+    }
+
+    toUpper(para_string) {
+        StringUpper, OutputVar, para_string
+        return % OutputVar
+    }
+
+    truncate(para_string, para_options := {}) {
+        if (para_options.separator && this.includes(para_string,para_value(para_string, para_options.separator))) {
+            para_string := StrSplit(para_string, para_options.separator)[1]
+        }
+        if (para_options.length > 0 && para_string.length > para_options.length) {
+            para_string := SubStr(para_string, 1 , para_options.length)
+        }
+        return % para_string
+    }
 
 
     ; /--\--/--\--/--\--/--\--/--\
