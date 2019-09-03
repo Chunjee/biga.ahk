@@ -5,15 +5,92 @@ Class biga {
         this.caseSensitive := false
         this.limit := -1
 	}
+    
+    concat(param_array,param_values*) {
+        if (!IsObject(l_array)) {
+            throw { error: "Type Error", file: A_LineFile, line: A_LineNumber }
+        }
+        l_array := this.clone(param_array)
+        for i, obj in param_values
+        {
+            if (!IsObject(obj)) {
+                ; push on any plain values
+                l_array.push(obj)
+            } else {
+                loop, % obj.MaxIndex() {
+                    l_array.push(obj[A_Index])
+                }
+            }
+        
+        }
+        return l_array
+    }
 
-    ; /--\--/--\--/--\--/--\--/--\
-    ; Array functions
-    ; \--/--\--/--\--/--\--/--\--/
+    clone(param_array,Objs := 0) {
+        if (!Objs) {
+            Objs := {}
+        }
+        Obj := param_array.Clone()
+        Objs[&param_array] := Obj ; Save this new array
+        For Key, Val in Obj
+        {
+            if (IsObject(Val)) ; If it is a subarray
+                Obj[Key] := Objs[&Val] ; If we already know of a refrence to this array
+                ? Objs[&Val] ; Then point it to the new array
+                : this.clone(Val,Objs) ; Otherwise, clone this sub-array
+        }
+        return Obj
+    }
+    
+    difference(para_array, para_excludevalues) {
+
+    }
 
 
-    ; /--\--/--\--/--\--/--\--/--\
-    ; Collection functions
-    ; \--/--\--/--\--/--\--/--\--/
+    join(param_collection,param_sepatator := ",") {
+        if (!IsObject(param_collection)) {
+            return false
+        }
+        l_Array := ""
+        loop, % param_collection.MaxIndex() {
+            if (A_Index == param_collection.MaxIndex()) {
+                return % l_Array param_collection[A_Index]
+            }
+            l_Array := param_collection[A_Index] param_sepatator l_Array
+        }
+    }
+
+
+    reverse(param_collection) {
+        if (!IsObject(param_collection)) {
+            throw { error: "Type Error", file: A_LineFile, line: A_LineNumber }
+        }
+        this.info_Array := []
+        while (param_collection.MaxIndex() != "") {
+            this.info_Array.push(param_collection.pop())
+        }
+        return % this.info_Array
+    }
+
+
+
+    uniq(param_collection) {
+        global
+        if (!IsObject(param_collection)) {
+            return false
+        }
+        dummy_Array := []
+        this.info_Array := []
+        Loop, % param_collection.MaxIndex() {
+            printedelement := this.internal_MD5(this.objPrint(param_collection[A_Index]))
+            if (this.indexOf(dummy_Array,printedelement) == -1) {
+                dummy_Array.push(printedelement)
+                this.info_Array.push(param_collection[A_Index])
+            }
+        }
+        return this.info_Array
+    }
+
 
     filter(para_collection,para_func) {
         this.info_Array := []
@@ -41,200 +118,104 @@ Class biga {
         return this.info_Array
     }
 
-    find(para_collection,para_iteratee,para_fromindex := 1) {
-        Loop, % para_collection.MaxIndex() {
-            if (para_fromindex > A_Index) {
+
+    find(param_collection,param_iteratee,param_fromindex := 1) {
+        Loop, % param_collection.MaxIndex() {
+            if (param_fromindex > A_Index) {
                 continue
             }
-            if (para_iteratee is string) {
-                if (para_collection[A_Index][para_iteratee]) {
-                    return % para_collection[A_Index]
+            if (param_iteratee is string) {
+                if (param_collection[A_Index][param_iteratee]) {
+                    return % param_collection[A_Index]
                 }
             }
-            if (IsFunc(para_iteratee)) {
-                if (%para_iteratee%(para_collection[A_Index])) {
-                    return % para_collection[A_Index]
+            if (IsFunc(param_iteratee)) {
+                if (%param_iteratee%(param_collection[A_Index])) {
+                    return % param_collection[A_Index]
                 }
             }
-            if (para_iteratee.Count() > 0) {
-                ; for Key, Value in para_func {
+            if (param_iteratee.Count() > 0) {
+                ; for Key, Value in param_func {
                 ;     msgbox, % Key
                 ;     msgbox, % Value
-                ;     if (para_collection[A_Index][para_func]) {
-                ;         return % this.info_Array.push(para_collection[A_Index])
+                ;     if (param_collection[A_Index][param_func]) {
+                ;         return % this.info_Array.push(param_collection[A_Index])
                 ;     }
                 ; }
             }
         }
     }
 
-    includes(para_collection,para_value,para_fromIndex := 1) {
-        if (!IsObject(para_collection)) {
-            stringFoundVar := InStr(para_collection, para_value, this.caseSensitive, para_fromIndex)
+
+    includes(param_collection,param_value,param_fromIndex := 1) {
+        if (IsObject(param_collection)) {
+            loop, % param_collection.MaxIndex() {
+                if (param_fromIndex > A_Index) {
+                    continue
+                }
+                if (param_collection[A_Index] = param_value) {
+                    return true
+                }
+            }
+            return false
+        } else {
+            ; RegEx
+            if (this.startsWith(param_value,"/") && this.startsWith(param_value,"/"),StrLen(param_collection)) {
+                param_value := SubStr(param_value, 2 , StrLen(param_value) - 2)
+                return % RegExMatch(param_collection, param_value, RE, param_fromIndex)
+            }
+            ; Normal string search
+            stringFoundVar := InStr(param_collection, param_value, this.caseSensitive, param_fromIndex)
             if (stringFoundVar == 0) {
                 return false
             } else {
                 return true
             }
-        } else {
-            loop, % para_collection.MaxIndex() {
-                if (para_fromIndex > A_Index) {
-                    continue
-                }
-                if (para_collection[A_Index] = para_value) {
-                    return true
-                }
+        }
+    }
+
+
+    map(param_collection,param_iteratee) {
+        l_Array := []
+        Loop, % param_collection.MaxIndex() {
+            if (IsFunc(param_iteratee)) {
+                    l_Array.push(%param_iteratee%(param_collection[A_Index]))
             }
+            if (param_iteratee is string) {
+                l_Array.push(param_collection[A_Index][param_iteratee])
+            }
+        }
+        return % l_Array
+    }
+
+
+    sampleSize(param_collection,param_SampleSize := 1) {
+        if (!IsObject(param_collection)) {
             return false
         }
-    }
-
-    join(para_collection,para_sepatator := ",") {
-        if (!IsObject(para_collection)) {
-            return false
-        }
-        l_output := ""
-        loop, % para_collection.MaxIndex() {
-            if (A_Index == para_collection.MaxIndex()) {
-                return % l_output para_collection[A_Index]
-            }
-            l_output := para_collection[A_Index] para_sepatator l_output
-        }
-    }
-
-    map(para_collection,para_iteratee) {
-        this.info_Array := []
-        Loop, % para_collection.MaxIndex() {
-            if (IsFunc(para_iteratee)) {
-                    this.info_Array.push(%para_iteratee%(para_collection[A_Index]))
-            }
-            if (para_iteratee is string) {
-                this.info_Array.push(para_collection[A_Index][para_iteratee])
-            }
-        }
-        return this.info_Array
-    }
-
-    matches(para_source) {
-        ; fn_array := []
-        ; fn := Func("dothis")
-        ; For Key, Value in para_source {
-
-        ; }
-    }
-
-    merge(para_collections*) {
-        result := para_collections[1]
-        for i, obj in para_collections {
-            if(A_Index = 1) {
-                Continue 
-            }
-            result := this.internal_Merge(result, obj)
-        }
-        return result
-    }
-
-    mergeWith(para_collection1,para_collection2,para_func) {
-
-    }
-    
-
-    orderBy() {
-
-    }
-
-
-    reverse(para_collection) {
-        if (!IsObject(para_collection)) {
-            throw { error: "Type Error", file: A_LineFile, line: A_LineNumber }
-        }
-        this.info_Array := []
-        while (para_collection.MaxIndex() != "") {
-            this.info_Array.push(para_collection.pop())
-        }
-        return % this.info_Array
-    }
-
-
-    sampleSize(para_collection,para_SampleSize) {
-        if (!IsObject(para_collection)) {
-            return false
-        }
-        if (para_SampleSize > para_collection.MaxIndex()) {
-            return % para_collection
+        if (param_SampleSize > param_collection.MaxIndex()) {
+            return % param_collection
         }
 
         this.info_Array := []
         l_dummyArray := []
-        loop, %para_SampleSize%
+        loop, %param_SampleSize%
         {
-            Random, randomNum, 1, para_collection.MaxIndex()
+            Random, randomNum, 1, param_collection.MaxIndex()
             while (this.indexOf(l_dummyArray,randomNum) != -1) {
                 l_dummyArray.push(randomNum)
-                Random, randomNum, 1, para_collection.MaxIndex()
+                Random, randomNum, 1, param_collection.MaxIndex()
             }
-            this.info_Array.push(para_collection[randomNum])
-            para_collection.RemoveAt(randomNum)
+            this.info_Array.push(param_collection[randomNum])
+            param_collection.RemoveAt(randomNum)
         }
         return % this.info_Array
     }
 
 
-    uniq(para_collection) {
-        global
-        if (!IsObject(para_collection)) {
-            return false
-        }
-        dummy_Array := []
-        this.info_Array := []
-        Loop, % para_collection.MaxIndex() {
-            printedelement := MD5(this.objPrint(para_collection[A_Index]))
-            if (this.indexOf(dummy_Array,printedelement) == -1) {
-                dummy_Array.push(printedelement)
-                this.info_Array.push(para_collection[A_Index])
-            }
-        }
-        return this.info_Array
-    }
-
-    ; /--\--/--\--/--\--/--\--/--\
-    ; String functions
-    ; \--/--\--/--\--/--\--/--\--/
-
-    replace(para_string := "",para_needle := "",para_replacement := "") {
-        l_string := para_string
-        output := StrReplace(l_string, para_needle, para_replacement, , this.limit)
-        return % output
-    }
-    
-    toLower(para_string) {
-        StringLower, OutputVar, para_string
-        return % OutputVar
-    }
-
-    toUpper(para_string) {
-        StringUpper, OutputVar, para_string
-        return % OutputVar
-    }
-
-    truncate(para_string, para_options := {}) {
-        if (para_options.separator && this.includes(para_string,para_value(para_string, para_options.separator))) {
-            para_string := StrSplit(para_string, para_options.separator)[1]
-        }
-        if (para_options.length > 0 && para_string.length > para_options.length) {
-            para_string := SubStr(para_string, 1 , para_options.length)
-        }
-        return % para_string
-    }
-
-
-    ; /--\--/--\--/--\--/--\--/--\
-    ; Util functions
-    ; \--/--\--/--\--/--\--/--\--/
-
-    isMatch(para_obj,para_iteratee) {
-        for Key, Value in para_iteratee {
-            if (para_obj[key] == Value) {
+    isMatch(param_obj,param_iteratee) {
+        for Key, Value in param_iteratee {
+            if (param_obj[key] == Value) {
                 continue
             } else {
                 return false
@@ -243,41 +224,39 @@ Class biga {
         return true
     }
 
-    ; /--\--/--\--/--\--/--\--/--\
-    ; Internal functions
-    ; \--/--\--/--\--/--\--/--\--/
 
-    indexOf(para_array,para_searchTerm)	{
-        for index, value in para_array {
-            if (this.caseSensitive ? (value == para_searchTerm) : (value = para_searchTerm)) {
-                return index
+
+    merge(param_collections*) {
+        result := param_collections[1]
+        for i, obj in param_collections {
+            if(A_Index = 1) {
+                Continue 
             }
+            result := this.internal_Merge(result, obj)
         }
-        return -1
+        return result
     }
 
-    internal_Merge(para_collection1, para_collection2) {
-        if(!IsObject(para_collection1) && !IsObject(para_collection2)) {
-
+    internal_Merge(param_collection1, param_collection2) {
+        if(!IsObject(param_collection1) && !IsObject(param_collection2)) {
             ; if only one OR the other exist, display them together. 
-            if(para_collection1 = "" || para_collection2 = "") {
-                return para_collection2 para_collection1
+            if(param_collection1 = "" || param_collection2 = "") {
+                return param_collection2 param_collection1
             }
-            ; if both are the same thing, return one of them only 
-            if (para_collection1 = para_collection2)
-                return para_collection1
+            ; return only one if they are the same
+            if (param_collection1 = param_collection2)
+                return param_collection1
             ; otherwise, return them together as an object. 
-            return [para_collection1, para_collection2]
+            return [param_collection1, param_collection2]
         }
 
         ; initialize an associative array
         combined := {}
 
-        for key, val in para_collection1 {
-            combined[key] := this.internal_Merge(val, para_collection2[key])
+        for key, val in param_collection1 {
+            combined[key] := this.internal_Merge(val, param_collection2[key])
         }
-
-        for key, val in para_collection2 {
+        for key, val in param_collection2 {
             if(!combined.HasKey(key)) {
                 combined[key] := val
             }
@@ -285,11 +264,76 @@ Class biga {
         return combined
     }
 
-    printObj(para_obj) {
-        if this.internal_IsCircle(para_obj) {
+
+    replace(param_string := "",param_needle := "",param_replacement := "") {
+        l_string := param_string
+        ; RegEx
+        if (l_needle := this.internal_JSRegEx(param_needle)) {
+            return % RegExReplace(param_string, l_needle, param_replacement, , this.limit)
+        }
+        output := StrReplace(l_string, param_needle, param_replacement, , this.limit)
+        return % output
+    }
+
+
+    startCase(para_string) {
+        StringUpper, para_string, para_string, T
+        return % para_string
+    }
+    startsWith(para_string, para_needle, para_fromIndex := 1) {
+        l_startString := SubStr(para_string, para_fromIndex, StrLen(para_needle))
+        ; check if substring matches
+        if (this.caseSensitive ? (l_startString == para_needle) : (l_startString = para_needle)) {
+            return true
+        }
+        return false
+    }
+
+
+
+    toLower(param_string) {
+        StringLower, OutputVar, param_string
+        return % OutputVar
+    }
+
+
+    toUpper(param_string) {
+        StringUpper, OutputVar, param_string
+        return % OutputVar
+    }
+
+
+    truncate(param_string, param_options := "") {
+        if (param_options.separator && this.includes(param_string, param_options.separator)) {
+            param_string := StrSplit(param_string, param_options.separator)[1]
+        }
+        if (param_options.length > 0 && param_string.length > param_options.length) {
+            param_string := SubStr(param_string, 1 , param_options.length)
+        }
+        return % param_string
+    }
+
+
+    ; /--\--/--\--/--\--/--\--/--\
+    ; Internal functions
+    ; \--/--\--/--\--/--\--/--\--/
+
+    indexOf(param_array,param_searchTerm)	{
+        for index, value in param_array {
+            if (this.caseSensitive ? (value == param_searchTerm) : (value = param_searchTerm)) {
+                return index
+            }
+        }
+        return -1
+    }
+
+
+
+    printObj(param_obj) {
+        if this.internal_IsCircle(param_obj) {
             throw { error: "Type Error", file: A_LineFile, line: A_LineNumber }
         }
-        for Key, Value in para_obj {
+        for Key, Value in param_obj {
             if Key is not Number 
             {
                 Output .= """" . Key . """:"
@@ -304,22 +348,39 @@ Class biga {
             else {
                 Output .= Value
             }
-            
             Output .= ", "
         }
         StringTrimRight, OutPut, OutPut, 2
         Return OutPut
     }
 
-    internal_IsCircle(para_obj, para_objs=0) {
-        if (!para_objs) {
-            para_objs := {}
+    internal_IsCircle(param_obj, param_objs=0) {
+        if (!param_objs) {
+            param_objs := {}
         }
-        for Key, Val in para_obj
+        for Key, Val in param_obj
         {
-            if (IsObject(Val)&&(para_objs[&Val]||Array_IsCircle(Val,(para_objs,para_objs[&Val]:=1)))) {
+            if (IsObject(Val)&&(param_objs[&Val]||this.internal_IsCircle(Val,(param_objs,param_objs[&Val]:=1)))) {
                 return true
             }
+        }
+        return false
+    }
+
+    internal_MD5(param_string, case := 0) {
+        static MD5_DIGEST_LENGTH := 16
+        hModule := DllCall("LoadLibrary", "Str", "advapi32.dll", "Ptr")
+        , VarSetCapacity(MD5_CTX, 104, 0), DllCall("advapi32\MD5Init", "Ptr", &MD5_CTX)
+        , DllCall("advapi32\MD5Update", "Ptr", &MD5_CTX, "AStr", param_string, "UInt", StrLen(param_string))
+        , DllCall("advapi32\MD5Final", "Ptr", &MD5_CTX)
+        loop % MD5_DIGEST_LENGTH
+            o .= Format("{:02" (case ? "X" : "x") "}", NumGet(MD5_CTX, 87 + A_Index, "UChar"))
+        return o, DllCall("FreeLibrary", "Ptr", hModule)
+    }
+
+    internal_JSRegEx(param_string) {
+        if (this.startsWith(param_string,"/") && this.startsWith(param_string,"/"),StrLen(param_string)) {
+            return % SubStr(param_string, 2 , StrLen(param_string) - 2)
         }
         return false
     }
