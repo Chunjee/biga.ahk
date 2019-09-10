@@ -4,10 +4,12 @@ Class biga {
         this.info_Array
         this.caseSensitive := false
         this.limit := -1
+
+        this.matchesObj
 	}
-    
+
     concat(param_array,param_values*) {
-        if (!IsObject(l_array)) {
+        if (!IsObject(param_array)) {
             throw { error: "Type Error", file: A_LineFile, line: A_LineNumber }
         }
         l_array := this.clone(param_array)
@@ -21,44 +23,49 @@ Class biga {
                     l_array.push(obj[A_Index])
                 }
             }
-        
         }
         return l_array
     }
 
-    clone(param_array,Objs := 0) {
-        if (!Objs) {
-            Objs := {}
+
+
+
+    difference(param_array, param_values*) {
+        if (!IsObject(param_array)) {
+            throw { error: "Type Error", file: A_LineFile, line: A_LineNumber }
         }
-        Obj := param_array.Clone()
-        Objs[&param_array] := Obj ; Save this new array
-        For Key, Val in Obj
+        l_array := this.clone(param_array)
+
+        for i, obj in param_values
         {
-            if (IsObject(Val)) ; If it is a subarray
-                Obj[Key] := Objs[&Val] ; If we already know of a refrence to this array
-                ? Objs[&Val] ; Then point it to the new array
-                : this.clone(Val,Objs) ; Otherwise, clone this sub-array
-        }
-        return Obj
-    }
-    
-    difference(para_array, para_excludevalues) {
-
-    }
-
-
-    join(param_collection,param_sepatator := ",") {
-        if (!IsObject(param_collection)) {
-            return false
-        }
-        l_Array := ""
-        loop, % param_collection.MaxIndex() {
-            if (A_Index == param_collection.MaxIndex()) {
-                return % l_Array param_collection[A_Index]
+            Loop, % obj.MaxIndex() {
+                if (this.indexOf(l_array,obj[A_Index]) != -1) {
+                    l_array.RemoveAt(A_Index)
+                }
             }
-            l_Array := param_collection[A_Index] param_sepatator l_Array
         }
+        return l_array
     }
+
+
+
+
+    join(param_array,param_sepatator := ",") {
+        if (!IsObject(param_array)) {
+            throw { error: "Type Error", file: A_LineFile, line: A_LineNumber }
+        }
+        l_array := this.clone(param_array)
+        loop, % l_array.MaxIndex() {
+            if (A_Index == 1) {
+                l_string := "" l_array[A_Index]
+                continue
+            }
+            l_string := l_string param_sepatator l_array[A_Index]
+        }
+        return l_string
+    }
+
+
 
 
     reverse(param_collection) {
@@ -74,15 +81,16 @@ Class biga {
 
 
 
+
+
     uniq(param_collection) {
-        global
         if (!IsObject(param_collection)) {
             return false
         }
         dummy_Array := []
         this.info_Array := []
         Loop, % param_collection.MaxIndex() {
-            printedelement := this.internal_MD5(this.objPrint(param_collection[A_Index]))
+            printedelement := this.internal_MD5(this.printObj(param_collection[A_Index]))
             if (this.indexOf(dummy_Array,printedelement) == -1) {
                 dummy_Array.push(printedelement)
                 this.info_Array.push(param_collection[A_Index])
@@ -92,31 +100,26 @@ Class biga {
     }
 
 
-    filter(para_collection,para_func) {
+
+
+    filter(param_collection,param_func) {
         this.info_Array := []
-        Loop, % para_collection.MaxIndex() {
-            if (para_func is string) {
-                if (para_collection[A_Index][para_func]) {
-                    this.info_Array.push(para_collection[A_Index])
+        Loop, % param_collection.MaxIndex() {
+            if (param_func is string) {
+                if (param_collection[A_Index][param_func]) {
+                    this.info_Array.push(param_collection[A_Index])
                 }
             }
-            if (IsFunc(para_func)) {
-                if (%para_func%(para_collection[A_Index])) {
-                    this.info_Array.push(para_collection[A_Index])
+            if (IsFunc(param_func)) {
+                if (%param_func%(param_collection[A_Index])) {
+                    this.info_Array.push(param_collection[A_Index])
                 }
             }
-            ; if (para_func.Count() > 0) {
-            ;     for Key, Value in para_func {
-            ;         msgbox, % Key
-            ;         msgbox, % Value
-            ;         if (para_collection[A_Index][para_func]) {
-            ;             this.info_Array.push(para_collection[A_Index])
-            ;         }
-            ;     }
-            ; }
         }
         return this.info_Array
     }
+
+
 
 
     find(param_collection,param_iteratee,param_fromindex := 1) {
@@ -126,25 +129,21 @@ Class biga {
             }
             if (param_iteratee is string) {
                 if (param_collection[A_Index][param_iteratee]) {
-                    return % param_collection[A_Index]
+                    return param_collection[A_Index]
                 }
             }
             if (IsFunc(param_iteratee)) {
                 if (%param_iteratee%(param_collection[A_Index])) {
-                    return % param_collection[A_Index]
+                    return param_collection[A_Index]
                 }
             }
             if (param_iteratee.Count() > 0) {
-                ; for Key, Value in param_func {
-                ;     msgbox, % Key
-                ;     msgbox, % Value
-                ;     if (param_collection[A_Index][param_func]) {
-                ;         return % this.info_Array.push(param_collection[A_Index])
-                ;     }
-                ; }
+
             }
         }
     }
+
+
 
 
     includes(param_collection,param_value,param_fromIndex := 1) {
@@ -160,32 +159,45 @@ Class biga {
             return false
         } else {
             ; RegEx
-            if (this.startsWith(param_value,"/") && this.startsWith(param_value,"/"),StrLen(param_collection)) {
-                param_value := SubStr(param_value, 2 , StrLen(param_value) - 2)
-                return % RegExMatch(param_collection, param_value, RE, param_fromIndex)
+            if (RegEx_value := this.internal_JSRegEx(param_value)) {
+                return % RegExMatch(param_collection, RegEx_value, RE, param_fromIndex)
             }
             ; Normal string search
-            stringFoundVar := InStr(param_collection, param_value, this.caseSensitive, param_fromIndex)
-            if (stringFoundVar == 0) {
-                return false
-            } else {
+            if (InStr(param_collection, param_value, this.caseSensitive, param_fromIndex)) {
                 return true
+            } else {
+                return false
             }
         }
     }
 
 
     map(param_collection,param_iteratee) {
-        l_Array := []
-        Loop, % param_collection.MaxIndex() {
+        if (!IsObject(param_collection)) {
+            throw { error: "Type Error", file: A_LineFile, line: A_LineNumber }
+        }
+        l_array := []
+        for Key, Value in param_collection
+        {
             if (IsFunc(param_iteratee)) {
-                    l_Array.push(%param_iteratee%(param_collection[A_Index]))
+                BoundFunc := param_iteratee.Bind(this, Value)
+                if (BoundFunc.Call()) {
+                    l_array.push(BoundFunc.Call())
+                } else {
+                    l_array.push(param_iteratee.Call(Value))
+                }
             }
             if (param_iteratee is string) {
-                l_Array.push(param_collection[A_Index][param_iteratee])
+                l_array.push(param_collection[A_Index][param_iteratee])
             }
         }
-        return % l_Array
+        return l_array
+    }
+
+
+
+    sample(param_collection) {
+        return this.sampleSize(param_collection)
     }
 
 
@@ -209,8 +221,223 @@ Class biga {
             this.info_Array.push(param_collection[randomNum])
             param_collection.RemoveAt(randomNum)
         }
-        return % this.info_Array
+        return this.info_Array
     }
+
+
+
+
+    shuffle(param_collection) {
+        if (!IsObject(param_collection)) {
+            throw { error: "Type Error", file: A_LineFile, line: A_LineNumber }
+        }
+        l_shuffledArray := []
+        loop, % param_collection.MaxIndex() {
+            Random, randomvar, 1, param_collection.MaxIndex()
+            l_shuffledArray.push(param_collection.RemoveAt(randomvar))
+        }
+        return l_shuffledArray
+    }
+
+
+
+
+    size(param_collection) {
+
+        if (param_collection.MaxIndex() > 0) {
+            return % param_collection.MaxIndex()
+        }
+
+        if (param_collection.Count() > 0) {
+            return % param_collection.Count()
+        }
+
+        return % StrLen(param_collection)
+    }
+
+
+
+
+    sort(param_collection, param_iteratees := "name") {
+        l_array := this.cloneDeep(param_collection)
+        Order := 1
+
+        for index2, obj2 in l_array {           
+            for index, obj in l_array {
+                if (lastIndex = index)
+                    break
+                if !(A_Index = 1) && ((Order = 1) ? (l_array[prevIndex][param_iteratees] > l_array[index][param_iteratees]) : (l_array[prevIndex][param_iteratees] < l_array[index][param_iteratees])) {    
+                tmp := l_array[index][param_iteratees] 
+                l_array[index][param_iteratees] := l_array[prevIndex][param_iteratees]
+                l_array[prevIndex][param_iteratees] := tmp  
+                }         
+                prevIndex := index
+            }     
+            lastIndex := prevIndex
+        }
+
+        ; remove any blank items if ahk array was made poorly
+        if (l_array.Count() != param_collection.MaxIndex() || StrLen(this.printObj(l_array[1])) < 2 || StrLen(this.printObj(l_array[l_array.MaxIndex()])) < 2) {
+            loop, % l_array.MaxIndex() {
+                if (StrLen(this.printObj(l_array[A_Index])) < 2) {
+                    l_array.RemoveAt(A_Index)
+                }
+            }
+        }
+        return l_array
+    }
+
+
+
+
+    sortBy(param_collection, param_iteratees) {
+        l_array := this.cloneDeep(param_collection)
+        Order := 1
+
+        if (IsObject(param_iteratees)) {
+            ; sort the collection however many times is requested by the shorthand identity
+            for Key, Value in param_iteratees {
+                l_array := this.sort(l_array, Value)
+            }
+        }
+
+        ; if (IsFunc(param_iteratees)) {
+        ;     temp_array := []
+        ;     for Key, Value in param_collection {
+        ;         temp_array.push(param_iteratees.__Call(param_collection[key]))
+        ;     }
+        ;     l_array := this.cloneDeep(temp_array)
+        ;     temp_array := [] ; free memory
+        ; }
+
+        return l_array
+    }
+
+
+
+
+        ; /--\--/--\--/--\--/--\--/--\
+        ; Internal functions
+        ; \--/--\--/--\--/--\--/--\--/
+
+        indexOf(param_array,param_searchTerm) {
+            for index, value in param_array {
+                if (this.caseSensitive ? (value == param_searchTerm) : (value = param_searchTerm)) {
+                    return index
+                }
+            }
+            return -1
+        }
+
+
+        printObj(param_obj) {
+            if (!IsObject(param_obj)) {
+                return param_obj
+            }
+            if this.internal_IsCircle(param_obj) {
+                throw { error: "Type Error", file: A_LineFile, line: A_LineNumber }
+            }
+            for Key, Value in param_obj {
+                if Key is not Number 
+                {
+                    Output .= """" . Key . """:"
+                } else {
+                    Output .= Key . ":"
+                }
+                if (IsObject(Value)) {
+                    Output .= "[" . this.printObj(Value) . "]"
+                } else if (Value is not number) {
+                    Output .= """" . Value . """"
+                }
+                else {
+                    Output .= Value
+                }
+                Output .= ", "
+            }
+            StringTrimRight, OutPut, OutPut, 2
+            Return OutPut
+        }
+
+
+        internal_IsCircle(param_obj, param_objs=0) {
+            if (!param_objs) {
+                param_objs := {}
+            }
+            for Key, Val in param_obj
+            {
+                if (IsObject(Val)&&(param_objs[&Val]||this.internal_IsCircle(Val,(param_objs,param_objs[&Val]:=1)))) {
+                    return true
+                }
+            }
+            return false
+        }
+
+
+        internal_MD5(param_string, case := 0) {
+            static MD5_DIGEST_LENGTH := 16
+            hModule := DllCall("LoadLibrary", "Str", "advapi32.dll", "Ptr")
+            , VarSetCapacity(MD5_CTX, 104, 0), DllCall("advapi32\MD5Init", "Ptr", &MD5_CTX)
+            , DllCall("advapi32\MD5Update", "Ptr", &MD5_CTX, "AStr", param_string, "UInt", StrLen(param_string))
+            , DllCall("advapi32\MD5Final", "Ptr", &MD5_CTX)
+            loop % MD5_DIGEST_LENGTH
+                o .= Format("{:02" (case ? "X" : "x") "}", NumGet(MD5_CTX, 87 + A_Index, "UChar"))
+            return o, DllCall("FreeLibrary", "Ptr", hModule)
+        }
+
+
+        internal_JSRegEx(param_string) {
+            if (this.startsWith(param_string,"/") && this.startsWith(param_string,"/"),StrLen(param_string)) {
+                return % SubStr(param_string, 2 , StrLen(param_string) - 2)
+            }
+            return false
+        }
+
+
+
+
+    clone(param_value) {
+        if (IsObject(param_value)) {
+            return param_value.Clone()
+        } else {
+            return param_value
+        }
+    }
+
+
+
+
+    cloneDeep(param_array,Objs := 0) {
+        if (!Objs) {
+            Objs := {}
+        }
+        Obj := param_array.Clone()
+        Objs[&param_array] := Obj ; Save this new array
+        For Key, Val in Obj
+        {
+            if (IsObject(Val)) ; If it is a subarray
+                Obj[Key] := Objs[&Val] ; If we already know of a refrence to this array
+                ? Objs[&Val] ; Then point it to the new array
+                : this.clone(Val,Objs) ; Otherwise, clone this sub-array
+        }
+        return Obj
+    }
+
+
+
+
+    isEqual(param_value, param_other) {
+        if (IsObject(param_value)) {
+            param_value := this.printObj(param_value)
+            param_other := this.printObj(param_other)
+        }
+
+        if (this.caseSensitive ? (param_value == param_other) : (param_value = param_other)) {
+            return true
+        }
+        return false
+    }
+
+
 
 
     isMatch(param_obj,param_iteratee) {
@@ -223,6 +450,8 @@ Class biga {
         }
         return true
     }
+
+
 
 
 
@@ -265,6 +494,8 @@ Class biga {
     }
 
 
+
+
     replace(param_string := "",param_needle := "",param_replacement := "") {
         l_string := param_string
         ; RegEx
@@ -272,22 +503,76 @@ Class biga {
             return % RegExReplace(param_string, l_needle, param_replacement, , this.limit)
         }
         output := StrReplace(l_string, param_needle, param_replacement, , this.limit)
-        return % output
+        return output
     }
 
 
-    startCase(para_string) {
-        StringUpper, para_string, para_string, T
-        return % para_string
+
+
+    split(param_string := "",param_separator := ",", param_limit := 0) {
+        if (IsObject(param_string)) {
+            throw { error: "Type Error", file: A_LineFile, line: A_LineNumber }
+        }
+        ; regex
+        if (this.internal_JSRegEx(param_separator)) {
+            param_string := this.replace(param_string,param_separator,",")
+            param_separator := ","
+        }
+
+        oSplitArray := StrSplit(param_string, param_separator)
+        if (!param_limit) {
+            return oSplitArray
+        } else {
+            oReducedArray := []
+            loop, % param_limit {
+                if (A_Index <= oSplitArray.MaxIndex()) {
+                    oReducedArray.push(oSplitArray[A_Index])
+                }
+            }
+        }
+        return oReducedArray
     }
-    startsWith(para_string, para_needle, para_fromIndex := 1) {
-        l_startString := SubStr(para_string, para_fromIndex, StrLen(para_needle))
+
+
+
+
+    startCase(param_string := "") {
+        l_string := this.replace(param_string,"/(\W)/"," ")
+        l_string := this.replace(l_string,"/([\_])/"," ")
+
+        ; add space before each capitalized character
+        RegExMatch(l_string, "O)([A-Z])", RE_Match)
+        if (RE_Match.Count()) {
+            loop, % RE_Match.Count() {
+                l_string := % SubStr(l_string,1,RE_Match.Pos(A_Index) - 1) " " SubStr(l_string,RE_Match.Pos(A_Index))
+            }
+        }
+        ; Split the string into array and Titlecase each element in the array
+        l_array := StrSplit(l_string, " ")
+        loop, % l_array.MaxIndex() {
+            x_string := l_array[A_Index]
+            StringUpper, x_string, x_string, T
+            l_array[A_Index] := x_string
+        }
+        ; join the string back together from Titlecased array elements
+        l_string := this.join(l_array," ")
+        l_string := this.trim(l_string)
+        return l_string
+    }
+
+
+
+
+    startsWith(param_string, param_needle, param_fromIndex := 1) {
+        l_startString := SubStr(param_string, param_fromIndex, StrLen(param_needle))
         ; check if substring matches
-        if (this.caseSensitive ? (l_startString == para_needle) : (l_startString = para_needle)) {
+        if (this.caseSensitive ? (l_startString == param_needle) : (l_startString = param_needle)) {
             return true
         }
         return false
     }
+
+
 
 
 
@@ -297,91 +582,102 @@ Class biga {
     }
 
 
+
+
     toUpper(param_string) {
         StringUpper, OutputVar, param_string
         return % OutputVar
     }
 
 
+
+
+    trim(param_string,param_chars := " ") {
+        if (param_chars = " ") {
+            l_string := this.trimStart(param_string, param_chars)
+            return % this.trimEnd(l_string, param_chars)
+        } else {
+            l_string := param_string
+            l_removechars := "\" this.join(StrSplit(param_chars,""),"\")
+
+            ; replace starting characters
+            l_string := this.trimStart(l_string,param_chars)
+            ; replace ending characters
+            l_string := this.trimEnd(l_string,param_chars)
+            return l_string
+        }
+    }
+
+
+
+
+    trimEnd(param_string,param_chars := " ") {
+        if (param_chars = " ") {
+            l_string := param_string
+            return % regexreplace(l_string, "(\s+)$") ;trim ending whitespace
+        } else {
+            l_string := param_string
+            l_removechars := "\" this.join(StrSplit(param_chars,""),"\")
+
+            ; replace ending characters
+            l_string := this.replace(l_string,"/([" l_removechars "]+)$/","")
+            return l_string
+        }
+    }
+
+
+
+
+    trimStart(param_string,param_chars := " ") {
+        if (param_chars = " ") {
+            return % regexreplace(param_string, "^(\s+)") ;trim beginning whitespace
+        } else {
+            l_string := param_string
+            l_removechars := "\" this.join(StrSplit(param_chars,""),"\")
+
+            ; replace starting characters
+            l_string := this.replace(l_string,"/^([" l_removechars "]+)/","")
+            return l_string
+        }
+    }
+
+
+
+
     truncate(param_string, param_options := "") {
-        if (param_options.separator && this.includes(param_string, param_options.separator)) {
-            param_string := StrSplit(param_string, param_options.separator)[1]
+        if (!IsObject(param_options)) {
+            param_options := {}
+            param_options.length := 30
         }
-        if (param_options.length > 0 && param_string.length > param_options.length) {
-            param_string := SubStr(param_string, 1 , param_options.length)
+        if (!param_options.omission) {
+            param_options.omission := "..."
         }
-        return % param_string
-    }
 
-
-    ; /--\--/--\--/--\--/--\--/--\
-    ; Internal functions
-    ; \--/--\--/--\--/--\--/--\--/
-
-    indexOf(param_array,param_searchTerm)	{
-        for index, value in param_array {
-            if (this.caseSensitive ? (value == param_searchTerm) : (value = param_searchTerm)) {
-                return index
+        ; check that length is even worth working on
+        if (StrLen(param_string) + StrLen(param_options.omission) < param_options.length && !param_options.separator) {
+            return param_string
+        }
+        
+        l_array := StrSplit(param_string,"")
+        l_string := ""
+        ; cut length of the string by character count + the omission's length
+        if (param_options.length) {
+            loop, % l_array.MaxIndex() {
+                if (A_Index > param_options.length - StrLen(param_options.omission)) {
+                    l_string := l_string param_options.omission
+                    break
+                }
+                l_string := l_string l_array[A_Index]
             }
         }
-        return -1
-    }
 
-
-
-    printObj(param_obj) {
-        if this.internal_IsCircle(param_obj) {
-            throw { error: "Type Error", file: A_LineFile, line: A_LineNumber }
+        ; separator
+        if (this.internal_JSRegEx(param_options.separator)) {
+            param_options.separator := this.internal_JSRegEx(param_options.separator)
         }
-        for Key, Value in param_obj {
-            if Key is not Number 
-            {
-                Output .= """" . Key . """:"
-            } else {
-                Output .= Key . ":"
-            }
-            if (IsObject(Value)) {
-                Output .= "[" . this.printObj(Value) . "]"
-            } else if (Value is not number) {
-                Output .= """" . Value . """"
-            }
-            else {
-                Output .= Value
-            }
-            Output .= ", "
+        if (param_options.separator) {
+            return % RegexReplace(l_string, "^(.{1," param_options.length "})" param_options.separator ".*$", "$1") param_options.omission
         }
-        StringTrimRight, OutPut, OutPut, 2
-        Return OutPut
-    }
-
-    internal_IsCircle(param_obj, param_objs=0) {
-        if (!param_objs) {
-            param_objs := {}
-        }
-        for Key, Val in param_obj
-        {
-            if (IsObject(Val)&&(param_objs[&Val]||this.internal_IsCircle(Val,(param_objs,param_objs[&Val]:=1)))) {
-                return true
-            }
-        }
-        return false
-    }
-
-    internal_MD5(param_string, case := 0) {
-        static MD5_DIGEST_LENGTH := 16
-        hModule := DllCall("LoadLibrary", "Str", "advapi32.dll", "Ptr")
-        , VarSetCapacity(MD5_CTX, 104, 0), DllCall("advapi32\MD5Init", "Ptr", &MD5_CTX)
-        , DllCall("advapi32\MD5Update", "Ptr", &MD5_CTX, "AStr", param_string, "UInt", StrLen(param_string))
-        , DllCall("advapi32\MD5Final", "Ptr", &MD5_CTX)
-        loop % MD5_DIGEST_LENGTH
-            o .= Format("{:02" (case ? "X" : "x") "}", NumGet(MD5_CTX, 87 + A_Index, "UChar"))
-        return o, DllCall("FreeLibrary", "Ptr", hModule)
-    }
-
-    internal_JSRegEx(param_string) {
-        if (this.startsWith(param_string,"/") && this.startsWith(param_string,"/"),StrLen(param_string)) {
-            return % SubStr(param_string, 2 , StrLen(param_string) - 2)
-        }
-        return false
+        return l_string
     }
 }
