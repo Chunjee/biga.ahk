@@ -1,22 +1,29 @@
 {
-    "name": "biga.ahk",
-    "version": "0.1.0",
-    "description": "A modern AHK utility library",
-    "main": "export.ahk",
-    "scripts": {
-        "newinstall": "yarn install --modules-folder ./lib"
-    },
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/Chunjee/biga.ahk"
-    },
-    "dependencies": {
-        "util-misc.ahk": "gist:cf6c862be8fa18c546d2fd67d86f84aa",
-        "util-array.ahk": "gist:a71f208bd55ebd7d3b0dc60847d07467"
-    },
-    "devDependencies": {
-        "unit-testing.ahk": "github:chunjee/unit-testing.ahk"
-    },
-    "author": "Shawn Brooker",
-    "license": "MIT"
+  "name": "biga.ahk",
+  "version": "0.1.6",
+  "description": "A modern AHK utility library",
+  "main": "export.ahk",
+  "scripts": {
+    "newinstall": "yarn install --modules-folder ./lib"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Chunjee/biga.ahk.git"
+  },
+  "dependencies": { },
+  "devDependencies": {
+    "unit-testing.ahk": "github:chunjee/unit-testing.ahk"
+  },
+  "author": "Shawn Brooker",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Chunjee/biga.ahk/issues"
+  },
+  "homepage": "https://github.com/Chunjee/biga.ahk#readme",
+  "keywords": [
+    "autohotkey",
+    "ahk",
+    "utility",
+    "lodash"
+  ]
 }

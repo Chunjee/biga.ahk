@@ -1,4 +1,4 @@
-Class biga {
+class biga {
 
 	__New() {
         this.info_Array
@@ -34,7 +34,7 @@ Class biga {
 
 	    for i, obj in param_values
 	    {
-	        Loop, % obj.MaxIndex() {
+	        loop, % obj.MaxIndex() {
 	            if (this.indexOf(l_array,obj[A_Index]) != -1) {
 	                l_array.RemoveAt(A_Index)
 	            }
@@ -43,7 +43,10 @@ Class biga {
 	    return l_array
 	}
 	findIndex(param_array,param_value,fromIndex := 1) {
-	    if (IsObject(param_value)) {
+	    if (IsFunc(param_value)) {
+	        vFunctionparam := true
+	    }
+	    if (IsObject(param_value) && !vFunctionparam) { ; do not convert objects that are functions
 	        vSearchingobjects := true
 	        param_value := this.printObj(param_value)
 	    }
@@ -54,8 +57,13 @@ Class biga {
 	        if (vSearchingobjects) {
 	            Value := this.printObj(Value)
 	        }
+	        if (vFunctionparam) {
+	            if (param_value.Call(param_array[A_Index])) {
+	                return Index
+	            }
+	        }
 	        if (this.caseSensitive ? (Value == param_value) : (Value = param_value)) {
-	            return %Index%
+	            return Index
 	        }
 	    }
 	    return -1
@@ -117,7 +125,7 @@ Class biga {
 	    }
 	    dummy_Array := []
 	    this.info_Array := []
-	    Loop, % param_collection.MaxIndex() {
+	    loop, % param_collection.MaxIndex() {
 	        printedelement := this.internal_MD5(this.printObj(param_collection[A_Index]))
 	        if (this.indexOf(dummy_Array,printedelement) == -1) {
 	            dummy_Array.push(printedelement)
@@ -128,7 +136,7 @@ Class biga {
 	}
 	filter(param_collection,param_func) {
 	    this.info_Array := []
-	    Loop, % param_collection.MaxIndex() {
+	    loop, % param_collection.MaxIndex() {
 	        if (param_func is string) {
 	            if (param_collection[A_Index][param_func]) {
 	                this.info_Array.push(param_collection[A_Index])
@@ -152,7 +160,7 @@ Class biga {
 	    return this.info_Array
 	}
 	find(param_collection,param_iteratee,param_fromindex := 1) {
-	    Loop, % param_collection.MaxIndex() {
+	    loop, % param_collection.MaxIndex() {
 	        if (param_fromindex > A_Index) {
 	            continue
 	        }
@@ -378,7 +386,7 @@ Class biga {
 	        Output .= ", "
 	    }
 	    StringTrimRight, OutPut, OutPut, 2
-	    Return OutPut
+	    return OutPut
 	}
 
 	internal_IsCircle(param_obj, param_objs=0) {
@@ -423,9 +431,9 @@ Class biga {
 	    }
 	    Obj := param_array.Clone()
 	    Objs[&param_array] := Obj ; Save this new array
-	    For Key, Val in Obj {
-	        if (IsObject(Val)) ; If it is a subarray
-	            Obj[Key] := Objs[&Val] ; If we already know of a refrence to this array
+	    for Key, Val in Obj {
+	        if (IsObject(Val)) ; if it is a subarray
+	            Obj[Key] := Objs[&Val] ; if we already know of a refrence to this array
 	            ? Objs[&Val] ; Then point it to the new array
 	            : this.clone(Val,Objs) ; Otherwise, clone this sub-array
 	    }
@@ -462,7 +470,7 @@ Class biga {
 	    result := param_collections[1]
 	    for i, obj in param_collections {
 	        if(A_Index = 1) {
-	            Continue 
+	            continue 
 	        }
 	        result := this.internal_Merge(result, obj)
 	    }
@@ -494,6 +502,18 @@ Class biga {
 	        }
 	    }
 	    return combined
+	}
+	parseInt(param_string) {
+	    param_string := this.trimStart(param_string,"0 -_")
+	    return % param_string + 0
+	}
+	repeat(param_string,param_number:=1) {
+	    vNewString := ""
+	    loop, % param_number
+	    {
+	        vNewString .= param_string
+	    }
+	    return vNewString
 	}
 	replace(param_string := "",param_needle := "",param_replacement := "") {
 	    l_string := param_string
@@ -655,5 +675,20 @@ Class biga {
 	        ; }
 	    }
 	    return l_string
+	}
+	words(param_string,param_pattern:="/[^\W]+/") {
+	    l_string := param_string
+	    l_array := []
+	    if (l_needle := this.internal_JSRegEx(param_pattern)) {
+	        param_pattern := l_needle
+
+	    }
+	    l_needle := "O)" param_pattern
+	    while(RegExMatch(l_string, l_needle, RE_Match)) {
+	        tempString := RE_Match.Value()
+	        l_array.push(tempString)
+	        l_string := this.replace(l_string, tempString)
+	    }
+	    return l_array
 	}
 }
