@@ -1,20 +1,32 @@
 class biga {
 
 	__New() {
-        this.info_Array
         this.caseSensitive := false
         this.limit := -1
+        this.throwExceptions := true
 
         this.matchesObj
 	}
 
+	compact(param_array) {
+	    if (!IsObject(param_array)) {
+	        this.internal_ThrowException()
+	    }
+	    l_array := []
+
+	    for key, value in param_array {
+	        if (value != "" && value != 0 && value != false) {
+	            l_array.push(value)
+	        }
+	    }
+	    return l_array
+	}
 	concat(param_array,param_values*) {
 	    if (!IsObject(param_array)) {
-	        throw { error: "Type Error", file: A_LineFile, line: A_LineNumber }
+	        this.internal_ThrowException()
 	    }
 	    l_array := this.clone(param_array)
-	    for i, obj in param_values
-	    {
+	    for i, obj in param_values {
 	        if (!IsObject(obj)) {
 	            ; push on any plain values
 	            l_array.push(obj)
@@ -28,15 +40,17 @@ class biga {
 	}
 	difference(param_array, param_values*) {
 	    if (!IsObject(param_array)) {
-	        throw { error: "Type Error", file: A_LineFile, line: A_LineNumber }
+	        this.internal_ThrowException()
 	    }
 	    l_array := this.clone(param_array)
 
+	    ; loop all param_values as it is Variadic
 	    for i, obj in param_values
 	    {
 	        loop, % obj.MaxIndex() {
-	            if (this.indexOf(l_array,obj[A_Index]) != -1) {
-	                l_array.RemoveAt(A_Index)
+	            foundIndex := this.indexOf(l_array,obj[A_Index])
+	            if (foundIndex != -1) {
+	                l_array.RemoveAt(foundIndex)
 	            }
 	        }
 	    }
@@ -59,14 +73,14 @@ class biga {
 	        }
 	        if (vFunctionparam) {
 	            if (param_value.Call(param_array[A_Index])) {
-	                return Index
+	                return % Index + 0
 	            }
 	        }
 	        if (this.caseSensitive ? (Value == param_value) : (Value = param_value)) {
-	            return Index
+	            return % Index + 0
 	        }
 	    }
-	    return -1
+	    return % -1 + 0
 	}
 	indexOf(param_array,param_value,fromIndex := 1) {
 	    for Index, Value in param_array {
@@ -74,14 +88,14 @@ class biga {
 	            continue
 	        }
 	        if (this.caseSensitive ? (Value == param_value) : (Value = param_value)) {
-	            return Index
+	            return % Index + 0
 	        }
 	    }
-	    return -1
+	    return % -1 + 0
 	}
 	join(param_array,param_sepatator := ",") {
-	    if (!IsObject(param_array)) {
-	        throw { error: "Type Error", file: A_LineFile, line: A_LineNumber }
+	    if (!IsObject(param_array) || IsObject(param_sepatator)) {
+	        this.internal_ThrowException()
 	    }
 	    l_array := this.clone(param_array)
 	    loop, % l_array.Count() {
@@ -104,60 +118,78 @@ class biga {
 	            continue
 	        }
 	        if (this.caseSensitive ? (param_array[vNegativeIndex] == param_value) : (param_array[vNegativeIndex] = param_value)) {
-	            return vNegativeIndex
+	            return % vNegativeIndex + 0
 	        }
 	    }
-	    return -1
+	    return % -1 + 0
 	}
 	reverse(param_collection) {
 	    if (!IsObject(param_collection)) {
-	        throw { error: "Type Error", file: A_LineFile, line: A_LineNumber }
+	        this.internal_ThrowException()
 	    }
-	    this.info_Array := []
+	    l_array := []
 	    while (param_collection.MaxIndex() != "") {
-	        this.info_Array.push(param_collection.pop())
+	        l_array.push(param_collection.pop())
 	    }
-	    return % this.info_Array
+	    return % l_array
+	}
+	sortedIndex(param_array,param_value) {
+	    if (param_value < param_array[1]) {
+	        return % 1 + 0
+	    }
+	    loop, % param_array.Count() {
+	        if (param_array[A_Index] < param_value && param_value < param_array[A_Index+1]) {
+	            return % A_Index + 1
+	        }
+	    }
+	    return % param_array.Count() + 1
 	}
 	uniq(param_collection) {
 	    if (!IsObject(param_collection)) {
 	        return false
 	    }
-	    dummy_Array := []
-	    this.info_Array := []
-	    loop, % param_collection.MaxIndex() {
+	    temp_Array := []
+	    l_array := []
+	    loop, % param_collection.Count() {
 	        printedelement := this.internal_MD5(this.printObj(param_collection[A_Index]))
-	        if (this.indexOf(dummy_Array,printedelement) == -1) {
-	            dummy_Array.push(printedelement)
-	            this.info_Array.push(param_collection[A_Index])
+	        if (this.indexOf(temp_Array,printedelement) == -1) {
+	            temp_Array.push(printedelement)
+	            l_array.push(param_collection[A_Index])
 	        }
 	    }
-	    return this.info_Array
+	    return l_array
+	}
+	without(param_array, param_values*) {
+	    if (!IsObject(param_array)) {
+	        this.internal_ThrowException()
+	    }
+	    l_array := this.clone(param_array)
+
+	    ; loop all param_values as it is Variadic
+	    for i, val in param_values
+	    {
+	        while (foundindex := this.indexOf(l_array, val) != -1) {
+	            l_array.RemoveAt(foundindex)
+	        }
+	    }
+	    return l_array
 	}
 	filter(param_collection,param_func) {
-	    this.info_Array := []
+	    l_array := []
 	    loop, % param_collection.MaxIndex() {
 	        if (param_func is string) {
 	            if (param_collection[A_Index][param_func]) {
-	                this.info_Array.push(param_collection[A_Index])
+	                l_array.push(param_collection[A_Index])
 	            }
 	        }
 	        if (IsFunc(param_func)) {
 	            if (%param_func%(param_collection[A_Index])) {
-	                this.info_Array.push(param_collection[A_Index])
+	                l_array.push(param_collection[A_Index])
 	            }
 	        }
-	        ; if (param_func.Count() > 0) {
-	        ;     for Key, Value in param_func {
-	        ;         msgbox, % Key
-	        ;         msgbox, % Value
-	        ;         if (param_collection[A_Index][param_func]) {
-	        ;             this.info_Array.push(param_collection[A_Index])
-	        ;         }
-	        ;     }
-	        ; }
+
 	    }
-	    return this.info_Array
+	    return l_array
 	}
 	find(param_collection,param_iteratee,param_fromindex := 1) {
 	    loop, % param_collection.MaxIndex() {
@@ -175,24 +207,19 @@ class biga {
 	                return param_collection[A_Index]
 	            }
 	        }
+	        ; A.matches handling
 	        if (param_iteratee.Count() > 0) {
-	            ; for Key, Value in param_func {
-	            ;     msgbox, % Key
-	            ;     msgbox, % Value
-	            ;     if (param_collection[A_Index][param_func]) {
-	            ;         return % this.info_Array.push(param_collection[A_Index])
-	            ;     }
-	            ; }
+
 	        }
 	    }
 	}
 	includes(param_collection,param_value,param_fromIndex := 1) {
 	    if (IsObject(param_collection)) {
-	        loop, % param_collection.MaxIndex() {
+	        for Key, Value in param_collection {
 	            if (param_fromIndex > A_Index) {
 	                continue
 	            }
-	            if (param_collection[A_Index] = param_value) {
+	            if (this.caseSensitive ? (Value == param_value) : (Value = param_value)) {
 	                return true
 	            }
 	        }
@@ -210,9 +237,28 @@ class biga {
 	        }
 	    }
 	}
+	internal_sort(param_collection, param_iteratees := "name") {
+	    l_array := this.cloneDeep(param_collection)
+
+	        for Index, obj in l_array {
+	            out .= obj[param_iteratees] "+" Index "|" ; "+" allows for sort to work with just the value
+	            ; out will look like:   value+index|value+index|
+	        }
+
+	        Value := l_array[l_array.minIndex(), param_iteratees]
+	        if Value is number 
+	            type := " N "
+	        StringTrimRight, out, out, 1 ; remove trailing | 
+	        Sort, out, % "D| "
+	        arrStorage := []
+	        loop, parse, out, |
+	        arrStorage.insert(l_array[SubStr(A_LoopField, InStr(A_LoopField, "+") + 1)])
+	        l_array := arrStorage
+	        return l_array
+	}
 	map(param_collection,param_iteratee) {
 	    if (!IsObject(param_collection)) {
-	        throw { error: "Type Error", file: A_LineFile, line: A_LineNumber }
+	        this.internal_ThrowException()
 	    }
 	    l_array := []
 	    ; check what kind of param_iteratee being worked with
@@ -225,42 +271,22 @@ class biga {
 	    ; run against every value in the collection
 	    for Key, Value in param_collection {
 	        if (!BoundFunc) { ; is property/string
-	            vReturn := param_collection[A_Index][param_iteratee]
-	            l_array.push(vReturn)
+	            vValue := param_collection[A_Index][param_iteratee]
+	            l_array.push(vValue)
 	            continue
 	        }
-	        vReturn := BoundFunc.Call(Value)
-	        if (vReturn) {
-	            l_array.push(vReturn)
+	        vValue := BoundFunc.Call(Value)
+	        if (vValue) {
+	            l_array.push(vValue)
 	        } else {
 	            l_array.push(param_iteratee.Call(Value))
 	        }
 	    }
 	    return l_array
 	}
-	matches(param_source) {
-	    if (!IsObject(param_source)) {
-	        throw { error: "Type Error", file: A_LineFile, line: A_LineNumber }
-	    }
-
-	    ; this.matchesObj := this.cloneDeep(param_source)
-	    ; for Key, Value in param_source {
-	    ;     BoundFunc := this.internal_matches.Bind(Value)
-	    ;     if (BoundFunc.Call()) {
-	    ;         l_array.push(BoundFunc.Call())
-	    ;     } else {
-	    ;         l_array.push(param_iteratee.Call(Value))
-	    ;     }
-	    ; }
-	    ; return Func(this.matchesObj)
-	    ; BoundFunc := Func.Bind(Param1, Param2, ...)
-	}
-
-	internal_matches(input1) {
-
-	}
 	sample(param_collection) {
-	    return this.sampleSize(param_collection)
+	    vSampleArray := this.sampleSize(param_collection)
+	    return vSampleArray[1]
 	}
 	sampleSize(param_collection,param_SampleSize := 1) {
 	    if (!IsObject(param_collection)) {
@@ -270,23 +296,23 @@ class biga {
 	        return % param_collection
 	    }
 
-	    this.info_Array := []
-	    l_dummyArray := []
+	    l_array := []
+	    tempArray := []
 	    loop, %param_SampleSize%
 	    {
 	        Random, randomNum, 1, param_collection.MaxIndex()
-	        while (this.indexOf(l_dummyArray,randomNum) != -1) {
-	            l_dummyArray.push(randomNum)
+	        while (this.indexOf(tempArray,randomNum) != -1) {
+	            tempArray.push(randomNum)
 	            Random, randomNum, 1, param_collection.MaxIndex()
 	        }
-	        this.info_Array.push(param_collection[randomNum])
+	        l_array.push(param_collection[randomNum])
 	        param_collection.RemoveAt(randomNum)
 	    }
-	    return this.info_Array
+	    return l_array
 	}
 	shuffle(param_collection) {
 	    if (!IsObject(param_collection)) {
-	        throw { error: "Type Error", file: A_LineFile, line: A_LineNumber }
+	        this.internal_ThrowException()
 	    }
 	    l_shuffledArray := []
 	    loop, % param_collection.MaxIndex() {
@@ -307,34 +333,6 @@ class biga {
 
 	    return % StrLen(param_collection)
 	}
-	sort(param_collection, param_iteratees := "name") {
-	    l_array := this.cloneDeep(param_collection)
-	    Order := 1
-
-	    for index2, obj2 in l_array {           
-	        for index, obj in l_array {
-	            if (lastIndex = index)
-	                break
-	            if !(A_Index = 1) && ((Order = 1) ? (l_array[prevIndex][param_iteratees] > l_array[index][param_iteratees]) : (l_array[prevIndex][param_iteratees] < l_array[index][param_iteratees])) {    
-	               tmp := l_array[index][param_iteratees] 
-	               l_array[index][param_iteratees] := l_array[prevIndex][param_iteratees]
-	               l_array[prevIndex][param_iteratees] := tmp  
-	            }         
-	            prevIndex := index
-	        }     
-	        lastIndex := prevIndex
-	    }
-
-	    ; remove any blank items if ahk array was made poorly
-	    if (l_array.Count() != param_collection.MaxIndex() || StrLen(this.printObj(l_array[1])) < 2 || StrLen(this.printObj(l_array[l_array.MaxIndex()])) < 2) {
-	        loop, % l_array.MaxIndex() {
-	            if (StrLen(this.printObj(l_array[A_Index])) < 2) {
-	                l_array.RemoveAt(A_Index)
-	            }
-	        }
-	    }
-	    return l_array
-	}
 	sortBy(param_collection, param_iteratees) {
 	    l_array := this.cloneDeep(param_collection)
 	    Order := 1
@@ -342,18 +340,14 @@ class biga {
 	    if (IsObject(param_iteratees)) {
 	        ; sort the collection however many times is requested by the shorthand identity
 	        for Key, Value in param_iteratees {
-	            l_array := this.sort(l_array, Value)
+	            l_array := this.internal_sort(l_array, Value)
 	        }
+	    } else {
+	        l_array := this.internal_sort(l_array, param_iteratees)
 	    }
 
 	    ; if (IsFunc(param_iteratees)) {
-	    ;     temp_array := []
-	    ;     for Key, Value in param_collection {
-	    ;         temp_array.push(param_iteratees.__Call(param_collection[key]))
-	    ;     }
-	    ;     l_array := this.cloneDeep(temp_array)
-	    ;     temp_array := [] ; free memory
-	    ; }
+
 
 	    return l_array
 	}
@@ -366,7 +360,7 @@ class biga {
 	        return param_obj
 	    }
 	    if this.internal_IsCircle(param_obj) {
-	        throw { error: "Type Error", file: A_LineFile, line: A_LineNumber }
+	        this.internal_ThrowException()
 	    }
 	    for Key, Value in param_obj {
 	        if Key is not Number 
@@ -418,6 +412,12 @@ class biga {
 	    }
 	    return false
 	}
+
+	internal_ThrowException() {
+	    if (this.throwExceptions == true) {
+	        throw Exception("Type Error", -2)
+	    }
+	}
 	clone(param_value) {
 	    if (IsObject(param_value)) {
 	        return param_value.Clone()
@@ -425,10 +425,8 @@ class biga {
 	        return param_value
 	    }
 	}
-	cloneDeep(param_array,Objs := 0) {
-	    if (!Objs) {
-	        Objs := {}
-	    }
+	cloneDeep(param_array) {
+	    Objs := {}
 	    Obj := param_array.Clone()
 	    Objs[&param_array] := Obj ; Save this new array
 	    for Key, Val in Obj {
@@ -508,12 +506,13 @@ class biga {
 	    return % param_string + 0
 	}
 	repeat(param_string,param_number:=1) {
-	    vNewString := ""
-	    loop, % param_number
-	    {
-	        vNewString .= param_string
+	    if (IsObject(param_string)) {
+	        this.internal_ThrowException()
 	    }
-	    return vNewString
+	    if (param_number == 0) {
+	        return ""
+	    }
+	    return StrReplace(Format("{:0" param_number "}", 0), "0", param_string)
 	}
 	replace(param_string := "",param_needle := "",param_replacement := "") {
 	    l_string := param_string
@@ -525,8 +524,8 @@ class biga {
 	    return output
 	}
 	split(param_string := "",param_separator := ",", param_limit := 0) {
-	    if (IsObject(param_string)) {
-	        throw { error: "Type Error", file: A_LineFile, line: A_LineNumber }
+	    if (IsObject(param_string) || IsObject(param_string) || IsObject(param_limit)) {
+	        this.internal_ThrowException()
 	    }
 	    ; regex
 	    if (this.internal_JSRegEx(param_separator)) {
@@ -579,6 +578,9 @@ class biga {
 	    return false
 	}
 	toLower(param_string) {
+	    if (IsObject(param_string)) {
+	        this.internal_ThrowException()
+	    }
 	    StringLower, OutputVar, param_string
 	    return % OutputVar
 	}
@@ -659,20 +661,7 @@ class biga {
 	    }
 	    if (param_options.separator) {
 	        return % RegexReplace(l_string, "^(.{1," param_options.length "})" param_options.separator ".*$", "$1") param_options.omission
-	        ; reversestring := this.join(this.reverse(StrSplit(l_string)),"")
-	        ; param_options.reverseseparator := this.join(this.reverse(StrSplit(param_options.separator)),"")
-	        ; l_match := RegExMatch(reversestring, "P)" param_options.reverseseparator, RE_Match)
-	        ; ; msgbox, % "REGEX: " RE_MatchPos1 " / " RE_MatchLen1 "/" l_match "`n-" param_options.separator "-`n`n" param_string "`n" l_string
-	        ; if (l_match) {
-	        ;     param_options.regexmatchposition := l_match
-	        ; }
-	        ; if (RE_MatchPos1) {
-	        ;     param_options.regexmatchposition := RE_MatchPos1
-	        ; }
-	        ; if (param_options.regexmatchposition) {
-	        ;     l_string := SubStr(reversestring, param_options.regexmatchposition + StrLen(param_options.separator))
-	        ;     return % this.join(this.reverse(StrSplit(l_string)),"") . param_options.omission
-	        ; }
+
 	    }
 	    return l_string
 	}
@@ -687,7 +676,7 @@ class biga {
 	    while(RegExMatch(l_string, l_needle, RE_Match)) {
 	        tempString := RE_Match.Value()
 	        l_array.push(tempString)
-	        l_string := this.replace(l_string, tempString)
+	        l_string := SubStr(l_string, RE_Match.Pos()+RE_Match.Len())
 	    }
 	    return l_array
 	}

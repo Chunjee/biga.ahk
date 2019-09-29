@@ -1,7 +1,7 @@
 {
   "name": "biga.ahk",
-  "version": "0.1.6",
-  "description": "A modern AHK utility library",
+  "version": "0.3.0",
+  "description": "A modern immutable utility library for AutoHotkey",
   "main": "export.ahk",
   "scripts": {
     "newinstall": "yarn install --modules-folder ./lib"
@@ -11,19 +11,18 @@
     "url": "git+https://github.com/Chunjee/biga.ahk.git"
   },
   "dependencies": { },
-  "devDependencies": {
-    "unit-testing.ahk": "github:chunjee/unit-testing.ahk"
-  },
+  "devDependencies": { },
   "author": "Shawn Brooker",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/Chunjee/biga.ahk/issues"
   },
-  "homepage": "https://github.com/Chunjee/biga.ahk#readme",
+  "homepage": "https://biga-ahk.github.io/biga.ahk",
   "keywords": [
     "autohotkey",
     "ahk",
     "utility",
-    "lodash"
+    "lodash",
+    "immutable"
   ]
 }

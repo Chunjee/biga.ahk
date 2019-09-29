@@ -7,7 +7,8 @@ Mirrors functionality and method names of [Lodash](https://lodash.com/)
 
 :warning: **alpha - The API might change, and may have defects** :warning:
 
-=================
+------------------
+
 
 ## Installation
 
@@ -43,6 +44,10 @@ uniqWords := A.uniq(wordsArray)
 msgbox, % A.join(uniqWords, " ")
 ; => "This could be real useful"
 ```
+
+Longer examples available at https://github.com/biga-ahk/biga.ahk/tree/master/examples
+
+
 ## Documentation 
 
 All working methods documented at https://biga-ahk.github.io/biga.ahk
