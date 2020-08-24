@@ -1,11 +1,13 @@
 biga.ahk
 =================
 
-A modern immutable utility library for AutoHotKey
+Long-form README and documentation: https://biga-ahk.github.io/biga.ahk
+
+A modern immutable utility library for AutoHotKey. Takes out the hassle of working with arrays, numbers, objects, strings, etc.
 
 Mirrors functionality and method names of [Lodash](https://lodash.com/)
 
-:warning: **alpha - The API might change, and may have defects prior to v1.0.0** :warning:
+:warning: **alpha - may have defects prior to v1.0.0** :warning:
 
 ------------------
 
@@ -17,6 +19,8 @@ In a terminal or command line navigated to your project folder:
 ```bash
 npm install biga.ahk
 ```
+You may also review or copy the library from [./export.ahk on GitHub](https://raw.githubusercontent.com/biga-ahk/biga.ahk/master/export.ahk)
+
 
 In your code:
 
@@ -24,8 +28,8 @@ In your code:
 #Include %A_ScriptDir%\node_modules
 #Include biga.ahk\export.ahk
 A := new biga()
-msgbox, % A.join(["a", "b", "c"], " ")
-; => "a b c"
+msgbox, % A.join(A.concat(["a"],["b", "c"]))
+; => "a,b,c"
 ```
 
 AutoHotkey v1.1.05 or higher is required
@@ -40,7 +44,7 @@ A := new biga()
 wordsArray := A.words("This could be real real useful")
 ; => ["This", "could", "be", "real", "real", "useful"]
 uniqWords := A.uniq(wordsArray)
-msgbox, % uniqWords.Count()
+msgbox, % A.size(uniqWords)
 ; => 6
 msgbox, % A.join(uniqWords, " ")
 ; => "This could be real useful"
@@ -49,11 +53,11 @@ msgbox, % A.join(uniqWords, " ")
 Longer realworld examples available at https://github.com/biga-ahk/biga.ahk/tree/master/examples
 
 
-## Documentation 
+## Documentation
 
-All working methods documented at https://biga-ahk.github.io/biga.ahk
+All methods documented at https://biga-ahk.github.io/biga.ahk
 
 
 ## Contributing
 
-Please make pull requests to src found at https://github.com/biga-ahk/biga.ahk
+Please make pull requests to source found at https://github.com/biga-ahk/biga.ahk
