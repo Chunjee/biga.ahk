@@ -718,11 +718,8 @@ class biga {
 		if (shorthand != false) {
 			boundFunc := this._internal_createShorthandfn(param_predicate, param_collection)
 		}
-		for Key, Value in param_collection {
-			if (!this.isUndefined(param_predicate.call(Value))) {
-				boundFunc := param_predicate.bind()
-			}
-			break
+		if (param_predicate.maxParams > 0) {
+			boundFunc := param_predicate.bind()
 		}
 
 		; create
@@ -739,7 +736,7 @@ class biga {
 		}
 		return true
 	}
-	filter(param_collection,param_predicate) {
+	filter(param_collection,param_predicate:="__identity") {
 		if (!IsObject(param_collection)) {
 			this._internal_ThrowException()
 		}
@@ -749,10 +746,35 @@ class biga {
 		if (shorthand != false) {
 			boundFunc := this._internal_createShorthandfn(param_predicate, param_collection)
 		}
+		l_paramAmmount := param_predicate.maxParams
+		if (l_paramAmmount == 3) {
+			collectionClone := this.cloneDeep(param_collection)
+		}
 		l_array := []
 
 		; create
 		for Key, Value in param_collection {
+			if (l_paramAmmount == 3) {
+				vIteratee := param_predicate.call(Value, Key, collectionClone)
+				if (vIteratee) {
+					l_array.push(Value)
+				}
+				continue
+			}
+			if (l_paramAmmount == 2) {
+				vIteratee := param_predicate.call(Value, Key)
+				if (vIteratee) {
+					l_array.push(Value)
+				}
+				continue
+			}
+			if (l_paramAmmount == 1) {
+				vIteratee := param_predicate.call(Value)
+				if (vIteratee) {
+					l_array.push(Value)
+				}
+				continue
+			}
 			; functor
 			if (IsFunc(param_predicate)) {
 				if (param_predicate.call(Value)) {
@@ -760,7 +782,7 @@ class biga {
 				}
 				continue
 			}
-			; predefined !functor handling (slower as it .calls blindly)
+			; calling own method
 			vValue := param_predicate.call(Value)
 			if (vValue) {
 				l_array.push(Value)
@@ -787,7 +809,7 @@ class biga {
 			boundFunc := this._internal_createShorthandfn(param_predicate, param_collection)
 		}
 
-		; perform
+		; create
 		for Key, Value in param_collection {
 			if (param_fromindex > A_Index) {
 				continue
@@ -823,7 +845,7 @@ class biga {
 		}
 
 		; prepare
-		l_paramAmmount := param_iteratee.MaxParams
+		l_paramAmmount := param_iteratee.maxParams
 		if (l_paramAmmount == 3) {
 			collectionClone := this.cloneDeep(param_collection)
 		}
@@ -855,7 +877,48 @@ class biga {
 		}
 		return param_collection
 	}
+	groupBy(param_collection,param_iteratee:="__identity") {
+		if (!IsObject(param_collection)) {
+			this._internal_ThrowException()
+		}
+		; prepare
+		; check what kind of param_iteratee being worked with
+		if (!param_iteratee.call(this.head(param_collection))) { ;calling own method
+			boundFunc := param_iteratee.bind(this)
+			thisThing := "boundfunc"
+		}
+		shorthand := this._internal_differenciateShorthand(param_iteratee, param_collection)
+		if (shorthand == ".property") {
+			boundFunc := this._internal_createShorthandfn(param_iteratee, param_collection)
+		}
+
+		; create
+		l_array := []
+		for Key, Value in param_collection {
+			if (thisThing == "boundfunc") {
+				; calling own method
+				vIteratee := boundFunc.call(Value)
+			} else {
+				; functor
+				vIteratee := param_iteratee.call(Value)
+			}
+			if (shorthand == ".property") {
+				; property shorthand
+				vIteratee := Value[param_iteratee]
+			}
+
+			; create array at key if not encountered yet
+			if (!l_array.hasKey(vIteratee)) {
+				l_array[vIteratee] := []
+			}
+			; add value to this key
+			l_array[vIteratee].push(Value)
+		}
+		return l_array
+	}
 	includes(param_collection,param_value,param_fromIndex:=1) {
+
+		; create
 		if (IsObject(param_collection)) {
 			for Key, Value in param_collection {
 				if (param_fromIndex > A_Index) {
@@ -894,7 +957,7 @@ class biga {
 		}
 
 		; prepare
-		l_paramAmmount := param_iteratee.MaxParams
+		l_paramAmmount := param_iteratee.maxParams
 		if (l_paramAmmount == 3) {
 			collectionClone := this.cloneDeep(param_collection)
 		}
@@ -928,8 +991,6 @@ class biga {
 		if (!IsObject(param_collection)) {
 			this._internal_ThrowException()
 		}
-
-		l_array := []
 
 		; prepare
 		shorthand := this._internal_differenciateShorthand(param_iteratee, param_collection)
@@ -980,7 +1041,7 @@ class biga {
 			break
 		}
 
-		; perform the action
+		; create
 		for Key, Value in param_collection {
 			if (BoundFunc.call(Value) == true) {
 				trueArray.push(Value)
@@ -1057,6 +1118,8 @@ class biga {
 		l_collection := this.clone(param_collection)
 		l_array := []
 		tempArray := []
+
+		; create
 		loop, % param_SampleSize
 		{
 			Random, randomNum, 1, l_collection.Count()
@@ -1076,17 +1139,17 @@ class biga {
 
 		; prepare
 		l_array := this.clone(param_collection)
-		l_keys := this.keys(l_array)
-		l_shuffledArray := []
 
 		; create
-		loop, % l_array.Count() {
-			randomIndex := this.random(1, l_keys.Count())
-			randomKey := l_keys[randomIndex]
-			l_shuffledArray.push(l_array[randomKey])
-			l_keys.RemoveAt(randomIndex)
+		l_index := l_array.Length()
+		loop, % l_index - 1 {
+			Random, randomIndex, 1, % l_index
+			l_tempVar := l_array[l_index]
+			l_array[l_index] := l_array[randomIndex]
+			l_array[randomIndex] := l_tempVar
+			l_index--
 		}
-		return l_shuffledArray
+		return l_array
 	}
 	size(param_collection) {
 
@@ -1187,8 +1250,7 @@ class biga {
 			} else if Value is not number
 			{
 				Output .= """" . Value . """"
-			}
-			else {
+			} else {
 				Output .= Value
 			}
 			Output .= ", "
@@ -1315,13 +1377,26 @@ class biga {
 		}
 		return Obj
 	}
-	isEqual(param_value,param_other) {
+	isEqual(param_value,param_other*) {
+
+		; prepare
 		if (IsObject(param_value)) {
+			l_array := []
 			param_value := this._printObj(param_value)
-			param_other := this._printObj(param_other)
+			loop, % param_other.Count() {
+				l_array.push(this._printObj(param_other[A_Index]))
+			}
+		} else {
+			l_array := this.cloneDeep(param_other)
 		}
 
-		return !(param_value != param_other) ; != follows StringCaseSense
+		; create
+		loop, % l_array.Count() {
+			if (param_value != l_array[A_Index]) { ; != follows StringCaseSense
+				return false
+			}
+		}
+		return true
 	}
 	isMatch(param_object,param_source) {
 		for Key, Value in param_source {
@@ -1459,7 +1534,7 @@ class biga {
 			if (BoundFunc) {
 				vIteratee := BoundFunc.call(Value)
 			}
-			if (param_iteratee.MaxParams == 1) {
+			if (param_iteratee.maxParams == 1) {
 				if (!BoundFunc.call(Value)) {
 					vIteratee := param_iteratee.call(Value)
 				}
@@ -1583,7 +1658,7 @@ class biga {
 		; create
 		for Index, Object in param_sources {
 			for Key, Value in Object {
-				if (!l_obj.HasKey(Key)) { ; if the key is not already in use
+				if (!l_obj.hasKey(Key)) { ; if the key is not already in use
 					l_obj[Key] := Value
 				}
 			}
@@ -1639,7 +1714,7 @@ class biga {
 			combined[Key] := this.internal_Merge(Value, param_collection2[Key])
 		}
 		for Key, Value in param_collection2 {
-			if(!combined.HasKey(Key)) {
+			if(!combined.hasKey(Key)) {
 				combined[Key] := Value
 			}
 		}
@@ -2104,7 +2179,7 @@ class biga {
 		return  param_itaree[param_property]
 	}
 	times(param_n,param_iteratee:="__identity") {
-		if (!this.isNumber(param_n) || this.isUndefined(param_iteratee.Call(1))) {
+		if (!this.isNumber(param_n) || this.isUndefined(param_iteratee.call(1))) {
 			this._internal_ThrowException()
 		}
 
@@ -2113,7 +2188,7 @@ class biga {
 
 		; create
 		loop, % param_n {
-			l_array.push(param_iteratee.Call(A_Index))
+			l_array.push(param_iteratee.call(A_Index))
 		}
 		return l_array
 	}
