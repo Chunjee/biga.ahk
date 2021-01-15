@@ -332,13 +332,21 @@ class biga {
 			this._internal_ThrowException()
 		}
 
+		; prepare
+		if (IsObject(param_value)) {
+			param_value := this._internal_MD5(param_value)
+			param_array := this.map(param_array, this._internal_MD5)
+		}
+
 		;  create
-		for Index, Value in param_array {
-			if (Index < fromIndex) {
+		for index, value in param_array {
+			if (index < fromIndex) {
 				continue
 			}
-			if (this.isEqual(Value, param_value)) {
-				return Index
+			if (value != param_value) {
+				continue
+			} else {
+				return index
 			}
 		}
 		return -1
@@ -1095,9 +1103,10 @@ class biga {
 		}
 
 		; prepare
-		l_array := []
-		for Key, Value in param_collection {
-			l_array.push(Value)
+		if (param_collection.count() != param_collection.length()) {
+			l_array := this.map(param_collection)
+		} else {
+			l_array := param_collection.clone()
 		}
 
 		; create
@@ -1117,21 +1126,13 @@ class biga {
 		; prepare
 		l_collection := this.clone(param_collection)
 		l_array := []
-		tempArray := []
-		if (l_collection.count() != l_collection.length()) {
-			l_collection := this.map(l_collection)
-		}
+		l_order := A.shuffle(this.keys(param_collection))
 
 		; create
 		loop, % param_SampleSize
 		{
-			Random, randomNum, 1, l_collection.Count()
-			while (this.indexOf(tempArray, randomNum) != -1) {
-				tempArray.push(randomNum)
-				Random, randomNum, 1, l_collection.Count()
-			}
-			l_array.push(l_collection[randomNum])
-			l_collection.RemoveAt(randomNum)
+			orderValue := l_order.pop()
+			l_array.push(l_collection[orderValue])
 		}
 		return l_array
 	}
@@ -1353,6 +1354,17 @@ class biga {
 		return false
 	}
 
+	isFloat(param) {
+		if (IsObject(param)) {
+			return false
+		}
+	    if param is float
+	    {
+			return true
+	    }
+		return false
+	}
+
 	isFalsey(param) {
 		if (param == "" || param == 0) {
 			return true
@@ -1394,6 +1406,21 @@ class biga {
 		}
 
 		; create
+		if (this.isNumber(param_value)) {
+			loop, % l_array.Count() {
+				if (this.isFloat(param_value) || this.isFloat(l_array[A_Index])) {
+					value := this.parseInt(param_value)
+					comparison := this.parseInt(l_array[A_Index])
+				} else {
+					value := this._internal_MD5(param_value)
+					comparison := this._internal_MD5(l_array[A_Index])
+				}
+				if (value != comparison) {
+					return false
+				}
+			}
+			return true
+		}
 		loop, % l_array.Count() {
 			if (param_value != l_array[A_Index]) { ; != follows StringCaseSense
 				return false
