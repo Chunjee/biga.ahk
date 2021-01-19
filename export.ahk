@@ -92,8 +92,7 @@ class biga {
 		}
 
 		; create
-		loop, % param_n
-		{
+		loop, % param_n	{
 			l_array.RemoveAt(1)
 		}
 		; return empty array if empty
@@ -116,8 +115,7 @@ class biga {
 		}
 
 		; create
-		loop, % param_n
-		{
+		loop, % param_n	{
 			l_array.RemoveAt(l_array.Count())
 		}
 		; return empty array if empty
@@ -351,29 +349,23 @@ class biga {
 		}
 		return -1
 	}
-	initial(param_array,param_n:=1) {
-		if (!this.isNumber(param_n)) {
-			this._internal_ThrowException()
-		}
+	initial(param_array) {
 
 		; prepare
 		if (IsObject(param_array)) {
 			l_array := this.clone(param_array)
 		}
-		if (param_array is alnum) {
+		if (this.isAlnum(param_array)) {
 			l_array := StrSplit(param_array)
 		}
 
 		; create
-		loop, % param_n
-		{
-			l_array.RemoveAt(l_array.Count())
-		}
 		; return empty array if empty
 		if (l_array.Count() == 0) {
 			return []
 		}
-		return l_array
+		return % this.dropRight(l_array)
+
 	}
 	intersection(param_arrays*) {
 		for Key, Value in param_arrays {
@@ -549,8 +541,7 @@ class biga {
 		l_array := []
 
 		; create
-		loop, % param_n
-		{
+		loop, % param_n	{
 			;continue if requested index is higher than param_array can account for
 			if (param_array.Count() < A_Index) {
 				continue
@@ -578,8 +569,7 @@ class biga {
 		l_array := []
 
 		; create
-		loop, % param_n
-		{
+		loop, % param_n	{
 			if (param_array.Count() == 0) {
 				continue
 			}
@@ -1406,21 +1396,6 @@ class biga {
 		}
 
 		; create
-		if (this.isNumber(param_value)) {
-			loop, % l_array.Count() {
-				if (this.isFloat(param_value) || this.isFloat(l_array[A_Index])) {
-					value := this.parseInt(param_value)
-					comparison := this.parseInt(l_array[A_Index])
-				} else {
-					value := this._internal_MD5(param_value)
-					comparison := this._internal_MD5(l_array[A_Index])
-				}
-				if (value != comparison) {
-					return false
-				}
-			}
-			return true
-		}
 		loop, % l_array.Count() {
 			if (param_value != l_array[A_Index]) { ; != follows StringCaseSense
 				return false
@@ -2044,39 +2019,37 @@ class biga {
 			this._internal_ThrowException()
 		}
 
-		; prepare default options object
-		if (!IsObject(param_options)) {
+		; prepare
+		if (!isObject(param_options)) {
 			param_options := {}
 			param_options.length := 30
 		}
-		if (!param_options.omission) {
+		if (!param_options.hasKey("omission")) {
 			param_options.omission := "..."
 		}
 
-		; check that length is even worth working on
-		if (StrLen(param_string) + StrLen(param_options.omission) < param_options.length && !param_options.separator) {
+		; check that length is even worth working on, skip if separator is defined
+		if (strLen(param_string) < param_options.length && !param_options.separator) {
 			return param_string
 		}
 
-		l_array := StrSplit(param_string, "")
-		l_string := ""
+		; create
 		; cut length of the string by character count + the omission's length
-		if (param_options.length) {
-			loop, % l_array.Count() {
-				if (A_Index > param_options.length - StrLen(param_options.omission)) {
-					l_string := l_string param_options.omission
-					break
-				}
-				l_string := l_string l_array[A_Index]
-			}
-		}
+		l_string := subStr(param_string, 1, param_options.length)
 
-		; separator
+		; Regex separator
 		if (this._internal_JSRegEx(param_options.separator)) {
 			param_options.separator := this._internal_JSRegEx(param_options.separator)
 		}
+		; handle string or Regex seperator
 		if (param_options.separator) {
 			return  RegexReplace(l_string, "^(.{1," param_options.length "})" param_options.separator ".*$", "$1") param_options.omission
+		}
+
+		; omission
+		if (strLen(l_string) < strLen(param_string)) {
+			l_string := subStr(l_string, 1, (strLen(l_string) - strLen(param_options.omission) + 1))
+			l_string := l_string . param_options.omission
 		}
 		return l_string
 	}
