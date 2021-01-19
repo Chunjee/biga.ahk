@@ -22,11 +22,12 @@ npm install biga.ahk
 You may also review or copy the library from [./export.ahk on GitHub](https://raw.githubusercontent.com/biga-ahk/biga.ahk/master/export.ahk)
 
 
-In your code:
+In your code only export.ahk needs to be included:
 
 ```autohotkey
 #Include %A_ScriptDir%\node_modules
 #Include biga.ahk\export.ahk
+
 A := new biga()
 msgbox, % A.join(A.concat(["a"],["b", "c"]))
 ; => "a,b,c"
