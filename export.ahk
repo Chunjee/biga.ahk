@@ -1475,7 +1475,7 @@ class biga {
 		}
 		if (param_precision >= 1) {
 			l_decChar := strlen( substr(param_number, instr(param_number, ".") + 1) ) ; count the number of decimal characters
-			l_sum := format("{:." max(l_decChar, param_precision) + 1 "f}", param_number + l_offset)
+			l_sum := format("{:." this.max([l_decChar, param_precision]) + 1 "f}", param_number + l_offset)
 		} else {
 			l_sum := param_number + l_offset
 		}
