@@ -19,7 +19,7 @@ In a terminal or command line navigated to your project folder:
 ```bash
 npm install biga.ahk
 ```
-You may also review or copy the library from [./export.ahk on GitHub](https://raw.githubusercontent.com/biga-ahk/biga.ahk/master/export.ahk)
+You may also review or copy the library from [./export.ahk on GitHub](https://raw.githubusercontent.com/biga-ahk/biga.ahk/master/export.ahk); #Incude as you would normally when manually downloading.
 
 
 In your code only export.ahk needs to be included:
