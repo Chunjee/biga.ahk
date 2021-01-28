@@ -3,7 +3,7 @@ biga.ahk
 
 Long-form README and documentation: https://biga-ahk.github.io/biga.ahk
 
-A modern immutable utility library for AutoHotKey. Takes out the hassle of working with arrays, numbers, objects, strings, etc.
+A modern immutable utility library for AutoHotKey. Takes out the hassle of working with arrays, objects, strings, etc.
 
 Mirrors functionality and method names of [Lodash](https://lodash.com/)
 
