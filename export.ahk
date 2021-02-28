@@ -424,8 +424,16 @@ class biga {
 	}
 	last(param_array) {
 
+		; prepare
+		if (isObject(param_array)) {
+			param_array := this.clone(param_array)
+		}
+		if (this.isString(param_array)) {
+			param_array := StrSplit(param_array)
+		}
+
 		; create
-		return this.takeRight(param_array)[1]
+		return param_array.pop()
 	}
 	lastIndexOf(param_array,param_value,param_fromIndex:=0) {
 		if (param_fromIndex == 0) {
@@ -1477,6 +1485,14 @@ class biga {
 			return true
 		}
 		return false
+	}
+	toString(param_value) {
+
+		if (isObject(param_value)) {
+			return this.join(param_value, ",")
+		} else {
+			return "" param_value
+		}
 	}
 	add(param_augend,param_addend) {
 		if (!this.isNumber(param_augend) || !this.isNumber(param_addend)) {
