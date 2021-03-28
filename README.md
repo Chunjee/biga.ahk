@@ -19,8 +19,6 @@ In a terminal or command line navigated to your project folder:
 ```bash
 npm install biga.ahk
 ```
-You may also review or copy the library from [./export.ahk on GitHub](https://raw.githubusercontent.com/biga-ahk/biga.ahk/master/export.ahk); #Incude as you would normally when manually downloading.
-
 
 In your code only export.ahk needs to be included:
 
@@ -32,6 +30,8 @@ A := new biga()
 msgbox, % A.join(A.concat(["a"],["b", "c"]))
 ; => "a,b,c"
 ```
+
+You may also review or copy the library from [./export.ahk on GitHub](https://raw.githubusercontent.com/biga-ahk/biga.ahk/master/export.ahk); #Incude as you would normally if manually downloading.
 
 AutoHotkey v1.1.05 or higher is required
 
