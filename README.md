@@ -27,7 +27,7 @@ In your code only export.ahk needs to be included:
 #Include biga.ahk\export.ahk
 
 A := new biga()
-msgbox, % A.join(A.concat(["a"],["b", "c"]))
+msgbox, % A.join(A.concat(["a"], ["b", "c"]))
 ; => "a,b,c"
 ```
 
