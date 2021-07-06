@@ -4,7 +4,7 @@ class biga {
 	static throwExceptions := true
 	static limit := -1
 
-	static _guardedMethods := ["biga.trim"]
+	static _guardedMethods := ["trim"]
 
 	; --- Static Methods ---
 	chunk(param_array,param_size:=1) {
@@ -40,9 +40,10 @@ class biga {
 
 		; create
 		for key, value in param_array {
-			if (value != "" && value != 0 && value != false) {
-				l_array.push(value)
+			if (value == "" || value == 0) {
+				continue
 			}
+			l_array.push(value)
 		}
 		return l_array
 	}
@@ -226,13 +227,13 @@ class biga {
 		}
 
 		; create
-		for index, value in param_array {
+		for key, value in param_array {
 			if (param_fromIndex > A_Index) {
 				continue
 			}
 			if (this.isCallable(param_predicate)) {
-				if (param_predicate.call(value, index, param_array)) {
-					return index
+				if (param_predicate.call(value, key, param_array)) {
+					return key
 				}
 			}
 		}
@@ -734,7 +735,6 @@ class biga {
 		}
 
 		; prepare
-		l_array := []
 		shorthand := this._internal_differenciateShorthand(param_predicate, param_collection)
 		if (shorthand != false) {
 			param_predicate := this._internal_createShorthandfn(param_predicate, param_collection)
@@ -843,9 +843,6 @@ class biga {
 		if (shorthand != false) {
 			param_iteratee := this._internal_createShorthandfn(param_iteratee, param_collection)
 		}
-		if (this.startsWith(param_iteratee.name, this.__Class ".")) { ;if starts with "biga."
-			param_iteratee := param_iteratee.bind(this)
-		}
 
 		; create
 		l_array := []
@@ -915,9 +912,6 @@ class biga {
 		if (shorthand == ".property") {
 			param_iteratee := this._internal_createShorthandfn(param_iteratee, param_collection)
 		}
-		if (this.startsWith(param_iteratee.name, this.__Class ".")) { ;if starts with "biga."
-			param_iteratee := param_iteratee.bind(this)
-		}
 		l_obj := {}
 
 		; run against every value in the collection
@@ -944,8 +938,8 @@ class biga {
 		if (shorthand == ".property") {
 			param_iteratee  := this.property(param_iteratee)
 		}
-		if (this.startsWith(param_iteratee.name, this.__Class ".")) { ;if starts with "biga."
-			guarded := this.includes(this._guardedMethods, param_iteratee.name)
+		if (this.startsWith(param_iteratee.name, this.base.__Class ".")) { ;if starts with "biga."
+			guarded := this.includes(this._guardedMethods, strSplit(param_iteratee.name, ".").2)
 			param_iteratee := param_iteratee.bind(this)
 		}
 		l_collection := this.cloneDeep(param_collection)
@@ -1017,11 +1011,14 @@ class biga {
 		return l_array
 	}
 	sample(param_collection) {
-		if (!isObject(param_collection)) {
+		if (!this.isStringLike(param_collection) && !isObject(param_collection)) {
 			this._internal_ThrowException()
 		}
 
 		; prepare
+		if (this.isStringLike(param_collection)) {
+			param_collection := strSplit(param_collection)
+		}
 		if (param_collection.count() != param_collection.length()) {
 			l_array := this.map(param_collection)
 		} else {
@@ -1043,15 +1040,17 @@ class biga {
 		}
 
 		; prepare
-		l_collection := this.clone(param_collection)
-		l_array := []
+		if (this.isStringLike(param_collection)) {
+			param_collection := strSplit(param_collection)
+		}
 		l_order := A.shuffle(this.keys(param_collection))
+		l_array := []
 
 		; create
 		loop, % param_sampleSize
 		{
 			ordervalue := l_order.pop()
-			l_array.push(l_collection[ordervalue])
+			l_array.push(param_collection[ordervalue])
 		}
 		return l_array
 	}
@@ -1113,7 +1112,7 @@ class biga {
 			this._internal_ThrowException()
 		}
 		; prepare
-		if (this.startsWith(param_iteratees.name, this.__Class ".")) { ;if starts with "biga."
+		if (this.startsWith(param_iteratees.name, this.base.__Class ".")) { ;if starts with "biga."
 			param_iteratees := param_iteratees.bind(this)
 		}
 		l_array := []
@@ -1249,6 +1248,9 @@ class biga {
 	}
 
 	_internal_differenciateShorthand(param_shorthand,param_objects:="") {
+		if (this.startsWith(param_shorthand.name, this.base.__Class ".")) { ;if starts with "biga."
+			return "_classMethod"
+		}
 		if (isObject(param_shorthand) && !this.isCallable(param_shorthand)) {
 			if (param_shorthand.maxIndex() != param_shorthand.count()) {
 				return ".matches"
@@ -1267,6 +1269,9 @@ class biga {
 
 	_internal_createShorthandfn(param_shorthand,param_objects) {
 		shorthand := this._internal_differenciateShorthand(param_shorthand, param_objects)
+		if (shorthand == "_classMethod") {
+			return param_shorthand.bind(this)
+		}
 		if (shorthand == ".matches") {
 			return this.matches(param_shorthand)
 		}
@@ -1349,6 +1354,16 @@ class biga {
 	}
 	isArray(param) {
 		if (param.GetCapacity()) {
+			return true
+		}
+		return false
+	}
+	isBoolean(param) {
+
+		if this.isEqual(param, 1) {
+			return true
+		}
+		if this.isEqual(param, 0) {
 			return true
 		}
 		return false
@@ -1611,6 +1626,28 @@ class biga {
 		}
 		return vSum
 	}
+	sumBy(param_array,param_iteratee:="__identity") {
+		if (!isObject(param_array)) {
+			this._internal_ThrowException()
+		}
+
+		; prepare
+		shorthand := this._internal_differenciateShorthand(param_iteratee, param_array)
+		if (shorthand = ".property") {
+			param_iteratee := this._internal_createShorthandfn(param_iteratee, param_array)
+		}
+		l_total := 0
+
+		; run against every value in the array
+		for key, value in param_array {
+			; functor
+			if (this.isCallable(param_iteratee)) {
+				l_iteratee := param_iteratee.call(value)
+			}
+			l_total += l_iteratee
+		}
+		return l_total
+	}
 	clamp(param_number,param_lower,param_upper) {
 		if (!this.isNumber(param_number) || !this.isNumber(param_lower) || !this.isNumber(param_upper)) {
 			this._internal_ThrowException()
@@ -1661,7 +1698,7 @@ class biga {
 		}
 
 		; create
-		Random, vRandom, param_lower, param_upper
+		random, vRandom, param_lower, param_upper
 		return vRandom
 	}
 	defaults(param_object,param_sources*) {
@@ -1771,7 +1808,7 @@ class biga {
 		if (shorthand == ".property") {
 			param_iteratee := this.property(param_iteratee)
 		}
-		if (this.startsWith(param_iteratee.name, this.__Class ".")) { ;if starts with "biga."
+		if (this.startsWith(param_iteratee.name, this.base.__Class ".")) { ;if starts with "biga."
 			param_iteratee := param_iteratee.bind(this)
 		}
 		l_object := this.cloneDeep(param_object)
@@ -1800,7 +1837,7 @@ class biga {
 		if (shorthand == ".property") {
 			param_iteratee := this.property(param_iteratee)
 		}
-		if (this.startsWith(param_iteratee.name, this.__Class ".")) { ;if starts with "biga."
+		if (this.startsWith(param_iteratee.name, this.base.__Class ".")) { ;if starts with "biga."
 			param_iteratee := param_iteratee.bind(this)
 		}
 		l_object := this.cloneDeep(param_object)
@@ -2145,7 +2182,7 @@ class biga {
 		l_string := trim(l_string)
 		return l_string
 	}
-	startsWith(param_string,param_needle,param_fromIndex:= 1) {
+	startsWith(param_string,param_needle,param_fromIndex:=1) {
 		if (!this.isStringLike(param_string) || !this.isStringLike(param_needle) || !this.isNumber(param_fromIndex)) {
 			this._internal_ThrowException()
 		}
@@ -2407,6 +2444,14 @@ class biga {
 		}
 
 		; prepare
+		if (this.startsWith(param_iteratee.name, this.base.__Class ".")) { ;if starts with "biga."
+			guarded := this.includes(this._guardedMethods, strSplit(param_iteratee.name, ".").2)
+			param_iteratee := param_iteratee.bind(this)
+		}
+		shorthand := this._internal_differenciateShorthand(param_iteratee)
+		if (shorthand != false) {
+			param_iteratee := this._internal_createShorthandfn(param_iteratee)
+		}
 		l_array := []
 
 		; create
