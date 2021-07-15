@@ -1,9 +1,21 @@
-biga.ahk
-=================
+<div align="center">
+	<a href="https://github.com/biga-ahk/biga.ahk">
+		<img src="logo.svg"/>
+	</a>
+	<br>
+	<br>
+	<a href="https://npmjs.com/package/biga.ahk">
+		<img src="https://img.shields.io/npm/dm/biga.ahk?style=for-the-badge">
+	</a>
+	<a href="https://biga-ahk.github.io/biga.ahk">
+		<img src="https://img.shields.io/badge/biga.ahk-documentation-blue?style=for-the-badge">
+	</a>
+	<h3>
+		A modern immutable utility library for AutoHotKey. Takes out the hassle of working with arrays, objects, strings, etc.<br>
+	</h3>
+</div>
 
 Long-form README and documentation: https://biga-ahk.github.io/biga.ahk
-
-A modern immutable utility library for AutoHotKey. Takes out the hassle of working with arrays, objects, strings, etc.
 
 Mirrors functionality and method names of [Lodash](https://lodash.com/)
 
