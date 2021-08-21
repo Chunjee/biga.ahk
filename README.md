@@ -8,7 +8,7 @@
 		<img src="https://img.shields.io/npm/dm/biga.ahk?style=for-the-badge">
 	</a>
 	<a href="https://biga-ahk.github.io/biga.ahk">
-		<img src="https://img.shields.io/badge/biga.ahk-documentation-blue?style=for-the-badge">
+		<img src="https://img.shields.io/badge/full-documentation-blue?style=for-the-badge">
 	</a>
 	<img src="https://img.shields.io/npm/l/string-similarity.ahk?color=tan&style=for-the-badge">
 	<h3>
