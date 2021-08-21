@@ -1,6 +1,6 @@
 <div align="center">
 	<a href="https://github.com/biga-ahk/biga.ahk">
-		<img src="logo.svg"/>
+		<img src="https://raw.githubusercontent.com/biga-ahk/biga.ahk/8cc466ae8a2764a9cd6f32a99d92f71276fbeee7/header.svg"/>
 	</a>
 	<br>
 	<br>
@@ -10,6 +10,7 @@
 	<a href="https://biga-ahk.github.io/biga.ahk">
 		<img src="https://img.shields.io/badge/biga.ahk-documentation-blue?style=for-the-badge">
 	</a>
+	<img src="https://img.shields.io/npm/l/string-similarity.ahk?color=tan&style=for-the-badge">
 	<h3>
 		A modern immutable utility library for AutoHotKey. Takes out the hassle of working with arrays, objects, strings, etc.<br>
 	</h3>
