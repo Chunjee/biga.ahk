@@ -44,7 +44,7 @@ msgbox, % A.join(A.concat(["a"], ["b", "c"]))
 ; => "a,b,c"
 ```
 
-You may also review or copy the library from [./export.ahk on GitHub](https://raw.githubusercontent.com/biga-ahk/biga.ahk/master/export.ahk); #Incude as you would normally if manually downloading.
+You may also review or copy the library from [./export.ahk on GitHub](https://raw.githubusercontent.com/biga-ahk/biga.ahk/master/export.ahk); #Incude as you would normally when manually downloading.
 
 AutoHotkey v1.1.05 or better is required
 
