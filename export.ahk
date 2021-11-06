@@ -53,14 +53,15 @@ class biga {
 		}
 
 		; prepare
-		l_array := this.clone(param_array)
+		l_array := this.cloneDeep(param_array)
 
 		; create
 		for index, object in param_values {
 			; push on any plain values
 			if (!isObject(object)) {
 				l_array.push(object)
-			} else { ;push object values 1 level deep
+			} else {
+				; push object values 1 level deep
 				for index2, object2 in object {
 					l_array.push(object2)
 				}
@@ -1107,14 +1108,9 @@ class biga {
 	}
 	size(param_collection) {
 
-		; prepare
-		if (param_collection.count() == 0) {
-			return ""
-		}
-
 		; create
-		if (max := this.max([param_collection.count(), param_collection.maxIndex()])) {
-			return max
+		if (isObject(param_collection)) {
+			return param_collection.count()
 		}
 		return strLen(param_collection)
 	}
@@ -1209,6 +1205,15 @@ class biga {
 			arrStorage.push(l_array[SubStr(A_LoopField, InStr(A_LoopField, "+") + 1)])
 		}
 		return arrStorage
+	}
+	now() {
+
+		; prepare
+		nowUTC := A_NowUTC
+
+		; create
+		nowUTC -= 19700101000000, s
+		return nowUTC "000"
 	}
 	; /--\--/--\--/--\--/--\--/--\
 	; Internal functions
@@ -1511,9 +1516,8 @@ class biga {
 			return this.map(param_value)
 		} else if (this.isString(param_value)) {
 			return strSplit(param_value)
-		} else {
-			return []
 		}
+		return []
 	}
 	toString(param_value) {
 
@@ -1627,11 +1631,8 @@ class biga {
 			this._internal_ThrowException()
 		}
 
-		l_sum := 0
-		for key, value in param_array {
-			l_sum += value
-		}
-		return l_sum / this.size(param_array)
+		; create
+		return this.sum(param_array) / param_array.maxIndex()
 	}
 	meanBy(param_array,param_iteratee:="__identity") {
 		if (!isObject(param_array)) {
@@ -2481,6 +2482,7 @@ class biga {
 		; prepare
 		HTMLmap := [["&","&amp;"], ["<","&lt;"], [">","&gt;"], ["""","&quot;"], ["'","&#39;"]]
 
+		; create
 		for key, value in HTMLmap {
 			element := value
 			param_string := StrReplace(param_string, element.2, element.1, , -1)
