@@ -1215,6 +1215,23 @@ class biga {
 		nowUTC -= 19700101000000, s
 		return nowUTC "000"
 	}
+	delay(param_func,param_wait,param_args*) {
+		if (!this.isCallable(param_func) || !this.isNumber(param_wait)) {
+			this._internal_ThrowException()
+		}
+
+		; prepare
+		; do not bind when 0 arguments supplied
+		if (param_args.count() == 0) {
+			boundFunc := param_func
+		} else {
+			boundFunc := param_func.bind(param_args*)
+		}
+
+		; create
+		setTimer, % boundFunc, % -1 * param_wait
+		return true
+	}
 	; /--\--/--\--/--\--/--\--/--\
 	; Internal functions
 	; \--/--\--/--\--/--\--/--\--/
@@ -2575,7 +2592,7 @@ class biga {
 			param_source := strSplit(param_source, ".")
 		}
 
-		; create the fn
+		; create
 		if (isObject(param_source)) {
 			keyArray := []
 			for key, value in param_source {
