@@ -53,14 +53,15 @@ class biga {
 		}
 
 		; prepare
-		l_array := this.clone(param_array)
+		l_array := this.cloneDeep(param_array)
 
 		; create
 		for index, object in param_values {
 			; push on any plain values
 			if (!isObject(object)) {
 				l_array.push(object)
-			} else { ;push object values 1 level deep
+			} else {
+				; push object values 1 level deep
 				for index2, object2 in object {
 					l_array.push(object2)
 				}
@@ -1107,14 +1108,9 @@ class biga {
 	}
 	size(param_collection) {
 
-		; prepare
-		if (param_collection.count() == 0) {
-			return ""
-		}
-
 		; create
-		if (max := this.max([param_collection.count(), param_collection.maxIndex()])) {
-			return max
+		if (isObject(param_collection)) {
+			return param_collection.count()
 		}
 		return strLen(param_collection)
 	}
@@ -1209,6 +1205,32 @@ class biga {
 			arrStorage.push(l_array[SubStr(A_LoopField, InStr(A_LoopField, "+") + 1)])
 		}
 		return arrStorage
+	}
+	now() {
+
+		; prepare
+		nowUTC := A_NowUTC
+
+		; create
+		nowUTC -= 19700101000000, s
+		return nowUTC "000"
+	}
+	delay(param_func,param_wait,param_args*) {
+		if (!this.isCallable(param_func) || !this.isNumber(param_wait)) {
+			this._internal_ThrowException()
+		}
+
+		; prepare
+		; do not bind when 0 arguments supplied
+		if (param_args.count() == 0) {
+			boundFunc := param_func
+		} else {
+			boundFunc := param_func.bind(param_args*)
+		}
+
+		; create
+		setTimer, % boundFunc, % -1 * param_wait
+		return true
 	}
 	; /--\--/--\--/--\--/--\--/--\
 	; Internal functions
@@ -1360,6 +1382,18 @@ class biga {
 		}
 		return false
 	}
+	castArray(param_value:="__default") {
+
+		; prepare
+		if (this.isArray(param_value)) {
+			return param_value.clone()
+		} else if (param_value == "__default") {
+			return []
+		}
+
+		; create
+		return [param_value]
+	}
 	clone(param_value) {
 
 		if (isObject(param_value)) {
@@ -1492,6 +1526,16 @@ class biga {
 		}
 		return false
 	}
+	toArray(param_value) {
+
+		; create
+		if (isObject(param_value)) {
+			return this.map(param_value)
+		} else if (this.isString(param_value)) {
+			return strSplit(param_value)
+		}
+		return []
+	}
 	toString(param_value) {
 
 		if (isObject(param_value)) {
@@ -1604,11 +1648,8 @@ class biga {
 			this._internal_ThrowException()
 		}
 
-		l_sum := 0
-		for key, value in param_array {
-			l_sum += value
-		}
-		return l_sum / this.size(param_array)
+		; create
+		return this.sum(param_array) / param_array.maxIndex()
 	}
 	meanBy(param_array,param_iteratee:="__identity") {
 		if (!isObject(param_array)) {
@@ -1784,6 +1825,20 @@ class biga {
 		random, vRandom, param_lower, param_upper
 		return vRandom
 	}
+	at(param_object,param_paths,param_defaultValue:="") {
+		if (!isObject(param_object)) {
+			this._internal_ThrowException()
+		}
+
+		; prepare
+		l_array := []
+
+		; create
+		for key, value in param_paths {
+			l_array.push(this.get(param_object, value))
+		}
+		return l_array
+	}
 	defaults(param_object,param_sources*) {
 		if (!isObject(param_object)) {
 			this._internal_ThrowException()
@@ -1847,13 +1902,11 @@ class biga {
 		}
 
 		; create
-		for key, value in param_path {
-			param_object := param_object[value]
+		returnValue := param_object[param_path*]
+		if (returnValue == "") {
+			returnValue := param_defaultValue
 		}
-		if (param_object == "") {
-			param_object := param_defaultValue
-		}
-		return param_object
+		return returnValue
 	}
 	invert(param_object) {
 		if (!isObject(param_object)) {
@@ -1961,7 +2014,7 @@ class biga {
 
 		result := param_collections[1]
 		for index, obj in param_collections {
-			if(A_Index = 1) {
+			if (A_Index == 1) {
 				continue
 			}
 			result := this.internal_Merge(result, obj)
@@ -1969,27 +2022,31 @@ class biga {
 		return result
 	}
 
-	internal_Merge(param_collection1, param_collection2) {
-		if(!isObject(param_collection1) && !isObject(param_collection2)) {
-			; if only one OR the other exist, display them together.
-			if(param_collection1 = "" || param_collection2 = "") {
-				return param_collection2 param_collection1
-			}
-			; return only one if they are the same
-			if (param_collection1 = param_collection2)
-				return param_collection1
-			; otherwise, return them together as an object.
-			return [param_collection1, param_collection2]
-		}
+	internal_Merge(param_value1, param_value2) {
 
-		; initialize an associative array
+		; prepare
 		combined := {}
 
-		for key, value in param_collection1 {
-			combined[key] := this.internal_Merge(value, param_collection2[key])
+		; create
+		if(!isObject(param_value1) && !isObject(param_value2)) {
+			; skip "" param_value1
+			if (this.isUndefined(param_value1) && this.isUndefined(param_value2)) {
+				return param_value2
+			}
+			; skip "" param_value2
+			if (!this.isUndefined(param_value1) && this.isUndefined(param_value2)) {
+				return param_value1
+			}
+			; otherwise, return the right side item
+			return param_value2
 		}
-		for key, value in param_collection2 {
-			if(!combined.hasKey(key)) {
+
+		; merge objects
+		for key, value in param_value1 {
+			combined[key] := this.internal_Merge(value, param_value2[key])
+		}
+		for key, value in param_value2 {
+			if (!combined.hasKey(key)) {
 				combined[key] := value
 			}
 		}
@@ -2442,6 +2499,7 @@ class biga {
 		; prepare
 		HTMLmap := [["&","&amp;"], ["<","&lt;"], [">","&gt;"], ["""","&quot;"], ["'","&#39;"]]
 
+		; create
 		for key, value in HTMLmap {
 			element := value
 			param_string := StrReplace(param_string, element.2, element.1, , -1)
@@ -2534,7 +2592,7 @@ class biga {
 			param_source := strSplit(param_source, ".")
 		}
 
-		; create the fn
+		; create
 		if (isObject(param_source)) {
 			keyArray := []
 			for key, value in param_source {
