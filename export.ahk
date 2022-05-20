@@ -3,8 +3,11 @@ class biga {
 	; --- Static Variables ---
 	static throwExceptions := true
 	static limit := -1
-
 	static _guardedMethods := ["trim"]
+	static _pathRegex := "/[.\[\]]/"
+
+	; --- Instance Variables ---
+	_uniqueId := 0
 
 	; --- Static Methods ---
 	chunk(param_array,param_size:=1) {
@@ -183,7 +186,7 @@ class biga {
 		l_array := this.cloneDeep(param_array)
 		l_droppableElements := 0
 		for key, value in l_array {
-			if (this.isCallable(param_predicate)) {
+			if (this.isFunction(param_predicate)) {
 				if (param_predicate.call(value, key, l_array)) {
 					l_droppableElements++
 				} else {
@@ -232,7 +235,7 @@ class biga {
 			if (param_fromIndex > A_Index) {
 				continue
 			}
-			if (this.isCallable(param_predicate)) {
+			if (this.isFunction(param_predicate)) {
 				if (param_predicate.call(value, key, param_array)) {
 					return key
 				}
@@ -539,7 +542,7 @@ class biga {
 
 		; create
 		for key, value in param_collection {
-			printedelement := this._printObj(param_collection[key])
+			printedelement := this._internal_stringify(param_collection[key])
 			if (l_temp != printedelement) {
 				l_temp := printedelement
 				l_array.push(value)
@@ -718,7 +721,7 @@ class biga {
 			if (param_fromIndex > A_Index) {
 				continue
 			}
-			if (this.isCallable(param_predicate)) {
+			if (this.isFunction(param_predicate)) {
 				if (param_predicate.call(value, key, param_collection) == true) {
 					l_count++
 					continue
@@ -764,7 +767,7 @@ class biga {
 
 		; create
 		for key, value in param_collection {
-			if (this.isCallable(param_predicate)) {
+			if (this.isFunction(param_predicate)) {
 				if (param_predicate.call(value, key, param_collection) == true) {
 					continue
 				}
@@ -793,7 +796,7 @@ class biga {
 		; create
 		for key, value in param_collection {
 			; functor
-			if (this.isCallable(param_predicate)) {
+			if (this.isFunction(param_predicate)) {
 				if (param_predicate.call(value, key, collectionClone)) {
 					l_array.push(value)
 				}
@@ -836,7 +839,7 @@ class biga {
 		; create
 		; run against every value in the collection
 		for key, value in param_collection {
-			if (this.isCallable(param_iteratee)) {
+			if (this.isFunction(param_iteratee)) {
 				vIteratee := param_iteratee.call(value, key, param_collection)
 			}
 			; exit iteration early by explicitly returning false
@@ -861,7 +864,7 @@ class biga {
 		; create
 		; run against every value in the collection
 		for key, value in collectionClone {
-			if (this.isCallable(param_iteratee)) {
+			if (this.isFunction(param_iteratee)) {
 				vIteratee := param_iteratee.call(value, key, collectionClone)
 			}
 			; exit iteration early by explicitly returning false
@@ -888,7 +891,7 @@ class biga {
 			vIteratee := 0
 
 			; functor
-			if (this.isCallable(param_iteratee) || !vIteratee) {
+			if (this.isFunction(param_iteratee) || !vIteratee) {
 				vIteratee := param_iteratee.call(value)
 			}
 			; create array at key if not encountered yet
@@ -954,7 +957,7 @@ class biga {
 
 		; run against every value in the collection
 		for key, value in param_collection {
-			if (this.isCallable(param_iteratee)) {
+			if (this.isFunction(param_iteratee)) {
 				vIteratee := param_iteratee.call(value, key, param_collection)
 				l_obj[vIteratee] := value
 			}
@@ -990,7 +993,7 @@ class biga {
 				continue
 			}
 			; functor
-			if (this.isCallable(param_iteratee)) {
+			if (this.isFunction(param_iteratee)) {
 				l_array.push(param_iteratee.call(value, key, l_collection))
 			}
 		}
@@ -1034,7 +1037,7 @@ class biga {
 		; create
 		for key, value in param_collection {
 			; functor
-			if (this.isCallable(param_predicate)) {
+			if (this.isFunction(param_predicate)) {
 				if (!param_predicate.call(value)) {
 					l_array.push(value)
 				}
@@ -1127,7 +1130,7 @@ class biga {
 
 		; create
 		for key, value in param_collection {
-			if (this.isCallable(param_predicate)) {
+			if (this.isFunction(param_predicate)) {
 				if (param_predicate.call(value, key, param_collection) = true) {
 					return true
 				}
@@ -1155,7 +1158,7 @@ class biga {
 			return this._internal_sort(param_collection, param_iteratees)
 		}
 		; own method or function
-		if (this.isCallable(param_iteratees)) {
+		if (this.isFunction(param_iteratees)) {
 			for key, value in param_collection {
 				l_array[A_Index] := {}
 				l_array[A_Index].value := value
@@ -1216,7 +1219,7 @@ class biga {
 		return nowUTC "000"
 	}
 	delay(param_func,param_wait,param_args*) {
-		if (!this.isCallable(param_func) || !this.isNumber(param_wait)) {
+		if (!this.isFunction(param_func) || !this.isNumber(param_wait)) {
 			this._internal_ThrowException()
 		}
 
@@ -1235,45 +1238,6 @@ class biga {
 	; /--\--/--\--/--\--/--\--/--\
 	; Internal functions
 	; \--/--\--/--\--/--\--/--\--/
-
-	_printObj(param_obj) {
-		if (!isObject(param_obj)) {
-			return """" param_obj """"
-		}
-		if this._internal_IsCircle(param_obj) {
-			this._internal_ThrowException()
-		}
-
-		for key, value in param_obj {
-			if key is not Number
-			{
-				Output .= """" . key . """:"
-			} else {
-				Output .= key . ":"
-			}
-			if (isObject(value)) {
-				Output .= "[" . this._printObj(value) . "]"
-			} else if value is not number
-			{
-				Output .= """" . value . """"
-			} else {
-				Output .= value
-			}
-			Output .= ", "
-		}
-		StringTrimRight, OutPut, OutPut, 2
-		return OutPut
-	}
-	print(param_obj) {
-		if (!isObject(param_obj)) {
-			return """" param_obj """"
-		}
-		if this._internal_IsCircle(param_obj) {
-			this._internal_ThrowException()
-		}
-
-		return this._printObj(param_obj)
-	}
 
 	_internal_MD5(param_string, case := 0) {
 		if (isObject(param_string)) {
@@ -1305,7 +1269,7 @@ class biga {
 		if (this.startsWith(param_shorthand.name, this.base.__Class ".")) { ;if starts with "biga."
 			return "_classMethod"
 		}
-		if (isObject(param_shorthand) && !this.isCallable(param_shorthand)) {
+		if (isObject(param_shorthand) && !this.isFunction(param_shorthand)) {
 			if (param_shorthand.maxIndex() != param_shorthand.count()) {
 				return ".matches"
 			}
@@ -1433,26 +1397,22 @@ class biga {
 	}
 	isBoolean(param) {
 
-		if this.isEqual(param, 1) {
+		if (param == 1) {
 			return true
 		}
-		if this.isEqual(param, 0) {
+		if (param == 0) {
 			return true
 		}
 		return false
-	}
-	isCallable(param) {
-		fn := numGet(&(_ := Func("InStr").bind()), "Ptr")
-		return (isFunc(param) || (isObject(param) && (numGet(&param, "Ptr") = fn)))
 	}
 	isEqual(param_value,param_other*) {
 
 		; prepare
 		if (isObject(param_value)) {
 			l_array := []
-			param_value := this._printObj(param_value)
+			param_value := this._internal_stringify(param_value)
 			loop, % param_other.count() {
-				l_array.push(this._printObj(param_other[A_Index]))
+				l_array.push(this._internal_stringify(param_other[A_Index]))
 			}
 		} else {
 			l_array := this.cloneDeep(param_other)
@@ -1467,14 +1427,15 @@ class biga {
 		return true
 	}
 	isFloat(param) {
-		if (isObject(param)) {
-			return false
-		}
 		if param is float
 		{
 			return true
 		}
 		return false
+	}
+	isFunction(param) {
+		fn := numGet(&(_ := Func("InStr").bind()), "Ptr")
+		return (isFunc(param) || (isObject(param) && (numGet(&param, "Ptr") = fn)))
 	}
 	isInteger(param) {
 		if param is integer
@@ -1543,6 +1504,19 @@ class biga {
 		} else {
 			return "" param_value
 		}
+	}
+	typeOf(param_value:="__default") {
+		if (isObject(param_value)) {
+			return "object"
+		}
+		if (param_value == "") {
+			return "undefined"
+		}
+		if param_value is float
+		{
+			return "float"
+		}
+		return param_value := "" || [param_value].GetCapacity(1) ? "string" : "integer"
 	}
 	add(param_augend,param_addend) {
 		if (!this.isNumber(param_augend) || !this.isNumber(param_addend)) {
@@ -1633,7 +1607,7 @@ class biga {
 
 		for key, value in param_array {
 			; functor
-			if (this.isCallable(param_iteratee)) {
+			if (this.isFunction(param_iteratee)) {
 				l_iteratee := param_iteratee.call(value)
 			}
 			if (l_iteratee > l_max) {
@@ -1666,7 +1640,7 @@ class biga {
 		; run against every value in the array
 		for key, value in param_array {
 			; functor
-			if (this.isCallable(param_iteratee)) {
+			if (this.isFunction(param_iteratee)) {
 				l_iteratee := param_iteratee.call(value)
 			}
 			l_total += l_iteratee
@@ -1700,7 +1674,7 @@ class biga {
 
 		for key, value in param_array {
 			; functor
-			if (this.isCallable(param_iteratee)) {
+			if (this.isFunction(param_iteratee)) {
 				l_iteratee := param_iteratee.call(value)
 			}
 			if (l_iteratee < l_min || this.isUndefined(l_min)) {
@@ -1761,7 +1735,7 @@ class biga {
 		; run against every value in the array
 		for key, value in param_array {
 			; functor
-			if (this.isCallable(param_iteratee)) {
+			if (this.isFunction(param_iteratee)) {
 				l_iteratee := param_iteratee.call(value)
 			}
 			l_total += l_iteratee
@@ -1875,7 +1849,7 @@ class biga {
 				continue
 			}
 			; functor
-			if (this.isCallable(param_predicate)) {
+			if (this.isFunction(param_predicate)) {
 				if (param_predicate.call(value)) {
 					return key
 				}
@@ -1889,9 +1863,8 @@ class biga {
 		}
 
 		; prepare
-		regex := "/[.\[\]]/"
 		if (!isObject(param_path)) {
-			l_array := this.compact(this.split(param_path, regex))
+			l_array := this.compact(this.split(param_path, this._pathRegex))
 			param_path := []
 			; remove undefined elements from array
 			for key, value in l_array {
@@ -1938,7 +1911,7 @@ class biga {
 
 		; create
 		for key, value in l_obj {
-			if (this.isCallable(param_iteratee)) {
+			if (this.isFunction(param_iteratee)) {
 				vkey := param_iteratee.call(value)
 			}
 			; create array at key if not encountered yet
@@ -1979,7 +1952,7 @@ class biga {
 		; create
 		for key, value in l_object {
 			; functor
-			if (this.isCallable(param_iteratee)) {
+			if (this.isFunction(param_iteratee)) {
 				l_array[param_iteratee.call(value, key, l_object)] := A_Index
 			}
 		}
@@ -2001,7 +1974,7 @@ class biga {
 		; create
 		for key, value in l_object {
 			; functor
-			if (this.isCallable(param_iteratee)) {
+			if (this.isFunction(param_iteratee)) {
 				l_array[key] := param_iteratee.call(value, key, l_object)
 			}
 		}
@@ -2104,7 +2077,7 @@ class biga {
 
 		; create
 		for key, value in param_object {
-			if (this.isCallable(param_predicate)) {
+			if (this.isFunction(param_predicate)) {
 				vItaree := param_predicate.call(value, key)
 				if (!this.isFalsey(vItaree)) {
 					l_obj[key] := value
@@ -2577,13 +2550,49 @@ class biga {
 
 	_internal_matchesProperty(param_property,param_matchvalue,param_itaree) {
 		itareevalue := param_property.call(param_itaree)
-		; msgbox, % "comparing " this._printObj(param_matchvalue) " to " this._printObj(itareevalue) " from(" this._printObj(param_itaree) ")"
 		if (!this.isUndefined(itareevalue)) {
 			if (itareevalue = param_matchvalue) {
 				return true
 			}
 		}
 		return false
+	}
+	print(values*) {
+		for key, value in values {
+			out .= (IsObject(value) ? this._internal_stringify(value) : value)
+		}
+		try {
+			DllCall("AttachConsole", "int", -1)
+			FileAppend, % "`n" out, CONOUT$
+			DllCall("FreeConsole")
+		} catch {
+
+		}
+		return out
+	}
+
+	_internal_stringify(param_value) {
+		if (!isObject(param_value)) {
+			return """" param_value """"
+		}
+		for key, value in param_value {
+			if key is not Number
+			{
+				output .= """" . key . """:"
+			} else {
+				output .= key . ":"
+			}
+			if (isObject(value)) {
+				output .= "[" . this._internal_stringify(value) . "]"
+			} else if value is not number
+			{
+				output .= """" . value . """"
+			} else {
+				output .= value
+			}
+			output .= ", "
+		}
+		return subStr(output, 1, -2)
 	}
 	property(param_source) {
 
@@ -2602,7 +2611,7 @@ class biga {
 			return boundFunc
 		} else {
 			boundFunc := ObjBindMethod(this, "internal_property", param_source)
-		return boundFunc
+			return boundFunc
 		}
 	}
 
@@ -2657,6 +2666,20 @@ class biga {
 		}
 		return l_array
 	}
+	toPath(param_value) {
+		if (!this.isString(param_value)) {
+			this._internal_ThrowException()
+		}
+
+		; prepare
+		if (!isObject(param_value)) {
+			return this.compact(this.split(param_value, this._pathRegex))
+		}
+	}
+	uniqueId(param_prefix:="") {
+		this._uniqueId++
+		return param_prefix this._uniqueId
+	}
 	first(param_array) {
 
 		; create
@@ -2677,7 +2700,7 @@ class biga {
 		; create
 		; run against every value in the collection
 		for key, value in param_collection {
-			if (this.isCallable(param_iteratee)) {
+			if (this.isFunction(param_iteratee)) {
 				vIteratee := param_iteratee.call(value, key, param_collection)
 			}
 			; exit iteration early by explicitly returning false
@@ -2702,7 +2725,7 @@ class biga {
 		; create
 		; run against every value in the collection
 		for key, value in collectionClone {
-			if (this.isCallable(param_iteratee)) {
+			if (this.isFunction(param_iteratee)) {
 				vIteratee := param_iteratee.call(value, key, collectionClone)
 			}
 			; exit iteration early by explicitly returning false

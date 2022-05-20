@@ -1,6 +1,6 @@
 {
 	"name": "biga.ahk",
-	"version": "0.51.0",
+	"version": "0.52.0",
 	"description": "A modern immutable utility library for AutoHotkey",
 	"main": "export.ahk",
 	"repository": {
@@ -8,7 +8,9 @@
 		"url": "git+https://github.com/biga-ahk/biga.ahk.git"
 	},
 	"dependencies": {},
-	"devDependencies": {},
+	"devDependencies": {
+		"expect.ahk": "^0.1.0"
+	},
 	"author": "Shawn Brooker",
 	"license": "MIT",
 	"bugs": {
