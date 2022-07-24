@@ -3,7 +3,7 @@ class biga {
 	; --- Static Variables ---
 	static throwExceptions := true
 	static limit := -1
-	static _guardedMethods := ["trim"]
+	static _guardedMethods := ["chunk", "every", "fill", "invert", "parseInt", "random", "trim", "reverse"]
 	static _pathRegex := "/[.\[\]]/"
 
 	; --- Instance Variables ---
@@ -644,6 +644,20 @@ class biga {
 		}
 		return l_array
 	}
+	unzip(param_array) {
+		if (!isObject(param_array)) {
+			this._internal_ThrowException()
+		}
+
+		; prepare
+		l_array := []
+
+		; create
+		for key, value in param_array[1] {
+			l_array[key] := this.map(param_array, key)
+		}
+		return l_array
+	}
 	without(param_array,param_values*) {
 		if (!isObject(param_array)) {
 			this._internal_ThrowException()
@@ -664,8 +678,11 @@ class biga {
 		if (!isObject(param_arrays)) {
 			this._internal_ThrowException()
 		}
+
+		; prepare
 		l_array := []
 
+		; create
 		; loop all Variadic inputs
 		for key, value in param_arrays {
 			; for each value in the supplied set of array(s)
@@ -1497,6 +1514,11 @@ class biga {
 		}
 		return []
 	}
+	toLength(param_value) {
+
+		; create
+		return this.floor(param_value)
+	}
 	toString(param_value) {
 
 		if (isObject(param_value)) {
@@ -1864,14 +1886,7 @@ class biga {
 
 		; prepare
 		if (!isObject(param_path)) {
-			l_array := this.compact(this.split(param_path, this._pathRegex))
-			param_path := []
-			; remove undefined elements from array
-			for key, value in l_array {
-				if (value != "") {
-					param_path.push(value)
-				}
-			}
+			param_path := this.compact(this.split(param_path, this._pathRegex))
 		}
 
 		; create
@@ -1880,6 +1895,27 @@ class biga {
 			returnValue := param_defaultValue
 		}
 		return returnValue
+	}
+	has(param_object,param_path) {
+		if (!isObject(param_object)) {
+			this._internal_ThrowException()
+		}
+
+		; prepare
+		if (this.isStringLike(param_path)) {
+			l_path := this.toPath(param_path)
+		} else {
+			l_path := this.cloneDeep(param_path)
+		}
+
+		; create
+		for key, value in l_path {
+			if (!param_object.hasKey(value)) {
+				return false
+			}
+			param_object := param_object[value]
+		}
+		return true
 	}
 	invert(param_object) {
 		if (!isObject(param_object)) {
@@ -2557,6 +2593,34 @@ class biga {
 		}
 		return false
 	}
+	noop() {
+		return ""
+	}
+	nthArg(param_n:=1) {
+		if (!this.isNumber(param_n)) {
+			this._internal_ThrowException()
+		}
+		; prepare
+		if (param_n == 0) {
+			param_n := 1
+		}
+
+		; create
+		if (param_n > 0) {
+			boundFunc := ObjBindMethod(this, "internal_nthArg", param_n)
+		} else {
+			boundFunc := ObjBindMethod(this, "internal_nthArgReverse", abs(param_n))
+		}
+		return boundFunc
+	}
+
+	internal_nthArg(param_n, args*) {
+		return args[param_n]
+	}
+	internal_nthArgReverse(param_n, args*) {
+		args := this.reverse(args)
+		return args[param_n]
+	}
 	print(values*) {
 		for key, value in values {
 			out .= (IsObject(value) ? this._internal_stringify(value) : value)
@@ -2597,9 +2661,7 @@ class biga {
 	property(param_source) {
 
 		; prepare
-		if (this.includes(param_source, ".")) {
-			param_source := strSplit(param_source, ".")
-		}
+		param_source := this.toPath(param_source)
 
 		; create
 		if (isObject(param_source)) {
@@ -2620,7 +2682,7 @@ class biga {
 			for key, value in param_property {
 				if (param_property.count() == 1) {
 					; msgbox, % "dove deep and found: " ObjRawGet(param_itaree, value)
-					return objRawGet(param_itaree, value)
+					return param_itaree[value]
 				} else if (param_itaree.hasKey(value)){
 					rvalue := this.internal_property(this.tail(param_property), param_itaree[value])
 				}
@@ -2628,6 +2690,19 @@ class biga {
 			return rvalue
 		}
 		return param_itaree[param_property]
+	}
+	propertyOf(param_object) {
+		if (!isObject(param_object)) {
+			this._internal_ThrowException()
+		}
+
+		; create
+		boundFunc := ObjBindMethod(this, "internal_propertyOf", param_object)
+		return boundFunc
+	}
+
+	internal_propertyOf(param_object,param_path) {
+		return this.property(param_path).call(param_object)
 	}
 	stubArray() {
 		return []
@@ -2667,14 +2742,11 @@ class biga {
 		return l_array
 	}
 	toPath(param_value) {
-		if (!this.isString(param_value)) {
-			this._internal_ThrowException()
-		}
-
 		; prepare
 		if (!isObject(param_value)) {
 			return this.compact(this.split(param_value, this._pathRegex))
 		}
+		return param_value
 	}
 	uniqueId(param_prefix:="") {
 		this._uniqueId++

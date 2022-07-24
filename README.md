@@ -12,7 +12,7 @@
 	</a>
 	<img src="https://img.shields.io/npm/l/string-similarity.ahk?color=tan&style=for-the-badge">
 	<h3>
-		A modern immutable utility library for AutoHotKey. Takes out the hassle of working with arrays, objects, strings, etc.<br>
+		A modern immutable utility library for AutoHotkey. Takes out the hassle of working with arrays, objects, strings, etc.<br>
 	</h3>
 </div>
 
