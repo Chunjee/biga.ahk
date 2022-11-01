@@ -12,7 +12,7 @@ class biga {
 
 	; --- Static Methods ---
 	chunk(param_array,param_size:=1) {
-		if (!isObject(param_array)) {
+		if (!isObject(param_array) || !this.isNumber(param_size)) {
 			this._internal_ThrowException()
 		}
 
@@ -96,14 +96,11 @@ class biga {
 
 		; create
 		; loop all Variadic inputs
-		for i, obj in param_values {
-			for key, value in obj {
-				loop {
-					foundIndex := this.indexOf(l_array, value)
-					if (foundIndex != -1) {
-						l_array.removeAt(foundIndex)
-					}
-				} until (foundIndex == -1)
+		for key, value in param_values {
+			for key2, value2 in value {
+				while ((foundIndex := this.indexOf(l_array, value2)) != -1) {
+					l_array.removeAt(foundIndex)
+				}
 			}
 		}
 		return l_array
@@ -806,8 +803,8 @@ class biga {
 			param_predicate := this._internal_createShorthandfn(param_predicate, param_collection)
 		}
 		collectionClone := []
-		l_paramAmmount := param_predicate.maxParams
 		l_array := []
+		l_paramAmmount := param_predicate.maxParams
 		if (l_paramAmmount == 3) {
 			collectionClone := this.cloneDeep(param_collection)
 		}
@@ -1157,7 +1154,7 @@ class biga {
 			this._internal_ThrowException()
 		}
 		; prepare
-		if (this.startsWith(param_iteratees.name, this.base.__Class ".")) { ;if starts with "biga."
+		if (this.startsWith(param_iteratees.name, this.__Class ".")) { ;if starts with "biga."
 			param_iteratees := param_iteratees.bind(this)
 		}
 		l_array := []
@@ -1357,7 +1354,7 @@ class biga {
 
 	_internal_detectOwnMethods(param_iteratee) {
 		;if starts with "biga."
-		if (this.startsWith(param_iteratee.name, this.base.__Class ".") && isObject(param_iteratee)) {
+		if (this.startsWith(param_iteratee.name, this.__Class ".") && isObject(param_iteratee)) {
 			return true
 		}
 		return false
@@ -2252,12 +2249,11 @@ class biga {
 		; create
 		if (isObject(param_paths)) {
 			for key, value in param_paths {
-				vValue := this.internal_property(value, param_object)
-				l_obj[value] := vValue
+				l_obj[value] := this.get(param_object, value)
 			}
 		} else {
-			vValue := this.internal_property(param_paths, param_object)
-			l_obj[param_paths] := vValue
+			l_deepPath := this.toPath(param_paths)
+			l_obj[l_deepPath*] := param_object[l_deepPath*]
 		}
 		return l_obj
 	}
@@ -2589,7 +2585,7 @@ class biga {
 
 		; create
 		if (param_chars == "") {
-			return trim(param_string)
+			return this.trim(param_string, "`r`n" A_space A_tab)
 		} else {
 			; replace starting characters
 			l_string := this.trimStart(param_string, param_chars)
@@ -2932,7 +2928,7 @@ class biga {
 		}
 
 		; prepare
-		if (this.startsWith(param_iteratee.name, this.base.__Class ".")) { ;if starts with "biga."
+		if (this.startsWith(param_iteratee.name, this.__Class ".")) { ;if starts with "biga."
 			guarded := this.includes(this._guardedMethods, strSplit(param_iteratee.name, ".").2)
 			param_iteratee := param_iteratee.bind(this)
 		}
