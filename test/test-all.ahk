@@ -57,14 +57,12 @@ assert.group(".difference")
 assert.label("default tests")
 assert.test(A.difference([2, 1], [2, 3]), [1])
 
-assert.test(A.difference([2, 1], [3]), [2, 1])
-
-assert.test(A.difference([2, 1], 3), [2, 1])
 
 ; omit
+assert.test(A.difference([2, 1], [3]), [2, 1])
 assert.test(A.difference(["Barney", "Fred"], ["Fred"]), ["Barney"])
 assert.test(A.difference(["Barney", "Fred"], []), ["Barney", "Fred"])
-assert.test(A.difference(["Barney", "Fred"], ["Barney"], ["Fred"]), [])
+assert.test(A.difference(["Barney", "Fred"], ["Pebbles"], ["Fred"]), ["Barney"])
 
 assert.label("remove repeat values")
 assert.test(A.difference([50, 50, 90], [50, 80]), [90])
@@ -556,6 +554,7 @@ wordOccurances := A.countBy(["one", "two", "three", "one", "two", "three"], A.to
 assert.equal(wordOccurances, {"one": 2, "two": 2, "three": 2})
 wordOccurances := A.countBy(["one", "two", "three", "one", "two", "three"])
 assert.equal(wordOccurances, {"one": 2, "two": 2, "three": 2})
+
 assert.group(".every")
 assert.label("default tests")
 assert.false(A.every([true, 1, false, "yes"], A.isBoolean))
@@ -639,7 +638,7 @@ assert.test(A.filter(users, "active"), [{"user":"barney", "age":36, "active":tru
 assert.label(".matches longhand")
 assert.test(A.filter(users, A.matches({"user": "fred"})), [{"user":"fred", "age":40, "active":false}])
 
-; assert.label("call own biga.ahk method (guarded)")
+assert.label("call own biga.ahk method (guarded)")
 ; assert.test(A.filter(users, A.random), ["hey", "hey", "hey"])
 
 assert.label("call own biga.ahk method (unguarded)")
@@ -1305,6 +1304,7 @@ assert.false(A.isEqual({"a": 1}, [1]))
 
 assert.label("different lengths")
 assert.false(A.isEqual({"a": 1}, {"a": 1, "c": 2}))
+
 assert.group(".isError")
 assert.label("default tests")
 assert.true(A.isError(Exception("something broke")))
@@ -1377,6 +1377,7 @@ assert.true(A.isString("abc"))
 assert.false(A.isString(1))
 
 ; omit
+assert.true(A.isString("1"))
 assert.true(A.isString("."))
 ; assert.false(A.isString(1.0000))
 ; assert.false(A.isString(1.0001))
@@ -1750,7 +1751,8 @@ assert.test(A.findKey(users, "active"), "barney")
 
 
 ; omit
-assert.test(A.findKey(users, "active", 2), "pebbles") ;fromindex argument
+assert.label("fromindex argument")
+assert.test(A.findKey(users, "active", 2), "pebbles")
 
 assert.group(".forIn")
 assert.label("default tests")
@@ -1917,9 +1919,23 @@ assert.test(A.pick(object, ["a", "c"]), {"a": 1, "c": 3})
 
 ; omit
 assert.test(A.pick(object, "a"), {"a": 1})
-assert.test(A.pick({ "a": {"b": 2}}, "a"), { "a": {"b": 2}})
-; assert.test(A.pick({ "a": {"b": 2}}, "a.b"), {"a": {"b": 2}})
+assert.label("with dropped keys")
+assert.test(A.pick({"a": {"b": 2}}, "a"), { "a": {"b": 2}})
 
+assert.label("deep object")
+assert.test(A.pick({"a": {"b": 2}}, "a.b"), {"a": {"b": 2}})
+
+assert.label("deep object with dropped keys")
+object := {"a": {"b": 2, "c": 3}}
+assert.test(A.pick(object, "a.b"), {"a": {"b": 2}})
+assert.label("mutation")
+assert.test(object, {"a": {"b": 2, "c": 3}})
+
+assert.label("complicated path with dropped keys")
+object := {"a": [{"b": 2, "c": 3}], "d": 4}
+assert.test(A.pick(object, "a[1].c"), {"a": [{"c": 3}]})
+assert.label("mutation")
+assert.test(object, {"a": [{"b": 2, "c": 3}], "d": 4})
 assert.group(".pickBy")
 assert.label("default tests")
 object := {"a": 1, "b": "two", "c": 3}
@@ -2134,7 +2150,10 @@ assert.test(A.map([" foo  ", "  bar  "], A.trim), ["foo", "bar"])
 
 
 ; omit
-assert.test(A.trim(A_Tab A_Tab "  abc  " A_Tab), "abc")
+assert.label("multiple types of whitespace")
+assert.test(A.trim(A_space A_tab "  abc  " A_tab), "abc")
+assert.label("multiple types of newline")
+assert.test(A.trim("  `rabc`n  "), "abc")
 
 assert.group(".trimEnd")
 assert.label("default tests")
@@ -2339,6 +2358,25 @@ object := {"a": array, "b": array, "c": array}
 assert.test(A.map(["a[3]", "c[1]"], A.propertyOf(object)), [2, 0])
 
 assert.test(A.map([["a", 3], ["c", 1]], A.propertyOf(object)), [2, 0])
+
+
+; omit
+
+assert.group(".range")
+assert.label("default tests")
+assert.test(A.range(4), [0, 1, 2, 3])
+
+assert.test(A.range(-4), [0, -1, -2, -3])
+
+assert.test(A.range(1, 5), [1, 2, 3, 4])
+
+assert.test(A.range(0, 20, 5), [0, 5, 10, 15])
+
+assert.test(A.range(0, -4, -1), [0, -1, -2, -3])
+
+assert.test(A.range(1, 4, 0), [1, 1, 1])
+
+assert.test(A.range(0), [])
 
 
 ; omit
