@@ -1,6 +1,6 @@
 {
 	"name": "biga.ahk",
-	"version": "0.55.0",
+	"version": "0.57.0",
 	"description": "A modern immutable utility library for AutoHotkey",
 	"main": "export.ahk",
 	"repository": {

@@ -119,9 +119,7 @@ class biga {
 		}
 
 		; create
-		loop, % param_n	{
-			l_array.removeAt(1)
-		}
+		l_array.removeAt(1, param_n)
 		; return empty array if empty
 		if (l_array.count() == 0) {
 			return []
@@ -399,18 +397,13 @@ class biga {
 			this._internal_ThrowException()
 		}
 
-		; prepare
-		l_array := this.clone(param_array)
-
 		; create
-		for l_key, l_value in l_array {
-			if (A_Index == 1) {
-				l_string := "" l_value
-				continue
-			}
-			l_string := l_string param_sepatator l_value
+		enum := param_array._newEnum()
+		enum.next(_, result)
+		while enum.next(_, item) {
+			result .= param_sepatator item
 		}
-		return l_string
+		return result
 	}
 	last(param_array) {
 
@@ -598,7 +591,7 @@ class biga {
 		; create
 		loop, % param_n	{
 			if (param_array.count() == 0) {
-				continue
+				break
 			}
 			vvalue := param_array.pop()
 			l_array.push(vvalue)
@@ -1166,7 +1159,7 @@ class biga {
 			return this._internal_sort(param_collection)
 		}
 		; property
-		if (this.isAlnum(param_iteratees)) {
+		if (this.isString(param_iteratees)) {
 			return this._internal_sort(param_collection, param_iteratees)
 		}
 		; own method or function
@@ -1558,8 +1551,8 @@ class biga {
 		return false
 	}
 	isFunction(param) {
-		fn := numGet(&(_ := Func("inStr").bind()), "ptr")
-		return (isFunc(param) || (isObject(param) && (numGet(&param, "ptr") = fn)))
+		funcRefrence := numGet(&(_ := Func("inStr").bind()), "ptr")
+		return (isFunc(param) || (isObject(param) && (numGet(&param, "ptr") = funcRefrence)))
 	}
 	isInteger(param) {
 		if param is integer
@@ -2273,8 +2266,7 @@ class biga {
 		; create
 		for key, value in param_object {
 			if (this.isFunction(param_predicate)) {
-				vItaree := param_predicate.call(value, key)
-				if (!this.isFalsey(vItaree)) {
+				if (!this.isFalsey(param_predicate.call(value, key))) {
 					l_obj[key] := value
 				}
 			}
@@ -2377,6 +2369,14 @@ class biga {
 		l_string := this.startCase(param_string)
 		l_string := this.toLower(this.trim(l_string))
 		return l_string
+	}
+	lowerFirst(param_string:="") {
+		if (!this.isStringLike(param_string)) {
+			this._internal_ThrowException()
+		}
+
+		; create
+		return this.tolower(subStr(param_string, 1, 1)) subStr(param_string, 2)
 	}
 	pad(param_string:="",param_length:=0,param_chars:=" ") {
 		if (!this.isStringLike(param_string) || !this.isNumber(param_length) || !this.isStringLike(param_chars)) {
@@ -2710,7 +2710,7 @@ class biga {
 		}
 
 		; create
-		return this.toUpper(this.head(param_string)) this.join(this.tail(param_string), "")
+		return this.toUpper(subStr(param_string, 1, 1)) subStr(param_string, 2)
 	}
 	words(param_string,param_pattern:="/\b\w+(?:'\w+)?\b/") {
 		if (!this.isString(param_string) || !this.isString(param_pattern)) {
@@ -2824,6 +2824,37 @@ class biga {
 	internal_nthArgReverse(param_n, args*) {
 		args := this.reverse(args)
 		return args[param_n]
+	}
+	over(param_iteratees:="__identity") {
+
+		; prepare
+		if (param_iteratees == "__identity") {
+			param_iteratees := [this.identity]
+		}
+		if (this.isFunction(param_iteratees)) {
+			param_iteratees := [param_iteratees]
+		}
+		for key, value in param_iteratees {
+			; turn blank "" into .identity
+			if (this.isUndefined(value)) {
+				param_iteratees[key] := this.identity.bind(this)
+			}
+			if (this.startsWith(value.name, this.__Class ".")) { ;if starts with "biga."
+				param_iteratees[key] := value.bind(this)
+			}
+		}
+
+		; create
+		boundFunc := this._internal_over.bind(this, param_iteratees)
+		return boundFunc
+	}
+
+	_internal_over(param_func, param_args*) {
+		l_output := []
+		for key, value in param_func {
+			l_output[key] := value.call(param_args*)
+		}
+		return l_output
 	}
 	print(values*) {
 		for key, value in values {
