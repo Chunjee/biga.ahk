@@ -18,6 +18,12 @@ assert.test(A.chunk(["a", "b", "c", "d"], 2), [["a", "b"], ["c", "d"]])
 assert.test(A.chunk(["a", "b", "c", "d"], 3), [["a", "b", "c"], ["d"]])
 
 ; omit
+assert.test(A.chunk([], 2), [])
+assert.test(A.chunk(["a", "b", "c", "d", "e"], 2), [["a", "b"], ["c", "d"], ["e"]])
+assert.test(A.chunk(["a", "b", "c", "d", "e"], 1), [["a"], ["b"], ["c"], ["d"], ["e"]])
+assert.test(A.chunk(["a", "b", "c", "d", "e"], 5), [["a", "b", "c", "d", "e"]])
+assert.test(A.chunk(["a", "b", "c", "d", "e"], 6), [["a", "b", "c", "d", "e"]])
+
 var := [1,2,3]
 A.chunk(var, 2)
 assert.label("parameter mutation")
@@ -30,6 +36,10 @@ assert.test(A.compact([0, 1, false, 2, "", 3]), [1, 2, 3])
 
 ; omit
 assert.test(A.compact([1, 2, 3, 4, 5, 6, "", "", ""]), [1, 2, 3, 4, 5, 6])
+assert.test(A.compact([]), [])
+assert.test(A.compact(["", 0, false]), [])
+assert.test(A.compact(["", 0, "hello", "", 1]), ["hello", 1])
+assert.test(A.compact([false, 0, ""]), [])
 
 assert.group(".concat")
 assert.label("default tests")
@@ -41,7 +51,12 @@ assert.test(A.concat(array), [1])
 assert.test(A.concat(array, 1), [1, 1])
 assert.label("associative object")
 assert.test(A.concat([], {"a": "abc", "b": "bcd"}), ["abc", "bcd"])
-; the correct way to concat associative objects AND retain their keys is A.merge as confirmed with tests
+assert.test(A.concat([1, 2], [3, 4]), [1, 2, 3, 4])
+assert.test(A.concat([], []), [])
+assert.test(A.concat([], [1, 2], [3], [[4]]), [1, 2, 3, [4]])
+assert.test(A.concat(["a", "b"], ["c", "d"]), ["a", "b", "c", "d"])
+assert.test(A.concat(["a"], []), ["a"])
+; the correct way to concat associative objects AND retain their keys is A.merge as confirmed with lodash tests
 
 assert.group(".depthOf")
 assert.label("default tests")
@@ -52,6 +67,11 @@ assert.test(A.depthOf([1, [2, [3, [4]], 5]]), 4)
 
 ; omit
 assert.test(A.depthOf({"key": 1}), 1)
+assert.test(A.depthOf([]), 1)
+assert.test(A.depthOf([1, 2, 3]), 1)
+assert.test(A.depthOf([[1, 2], [3, 4]]), 2)
+assert.test(A.depthOf([[[1]], [[2]], [[3]]]), 3)
+assert.test(A.depthOf([1, [2, [3, [4]]]]), 4)
 
 assert.group(".difference")
 assert.label("default tests")
@@ -64,8 +84,13 @@ assert.test(A.difference(["Barney", "Fred"], ["Fred"]), ["Barney"])
 assert.test(A.difference(["Barney", "Fred"], []), ["Barney", "Fred"])
 assert.test(A.difference(["Barney", "Fred"], ["Pebbles"], ["Fred"]), ["Barney"])
 
-assert.label("remove repeat values")
-assert.test(A.difference([50, 50, 90], [50, 80]), [90])
+assert.test(A.difference([], [1, 2, 3]), [])
+assert.test(A.difference([1, 2, 3], []), [1, 2, 3])
+assert.test(A.difference([1, 2, 3], [1, 2, 3]), [])
+assert.test(A.difference([1, 2, 3], [4, 5, 6]), [1, 2, 3])
+assert.test(A.difference([1, 2, 3], [2, 3]), [1])
+
+assert.test(A.difference([50, 50, 90], [50, 80]), [90], "remove repeat values")
 
 assert.group(".drop")
 assert.label("default tests")
@@ -79,6 +104,8 @@ assert.test(A.drop(100), ["0", "0"])
 
 ; omit
 assert.test(A.drop([]), [])
+assert.test(A.drop([1, 2, 3], 3), [])
+assert.test(A.drop(["a", "b", "c", "d"], 2), ["c", "d"], "non-numeric values")
 ; lodash .drop does not work with associative arrays
 
 assert.group(".dropRight")
@@ -92,42 +119,61 @@ assert.test(A.dropRight(100), ["1", "0"])
 
 ; omit
 assert.test(A.dropRight([]), [])
-
+assert.test(A.dropRight([1, 2, 3], 3), [])
+assert.test(A.dropRight([1, 2, 3], 4), [], "param_n larger than the provided array param")
+assert.test(A.dropRight(["a", "b", "c", "d"], 2), ["a", "b"])
 assert.group(".dropRightWhile")
 assert.label("default tests")
 users := [ {"user": "barney", 	"active": true}
 		, {"user": "fred",		"active": false}
 		, {"user": "pebbles", 	"active": false} ]
-assert.test(A.dropRightWhile(users, Func("fn_dropRightWhile")), [{"user": "barney", "active": true }])
+assert.test(A.dropRightWhile(users, func("fn_dropRightWhile")), [{"user": "barney", "active": true }])
 fn_dropRightWhile(o)
 {
 	return !o.active
 }
 
 ; The A.matches iteratee shorthand.
+assert.label("A.matches iteratee shorthand")
 assert.test(A.dropRightWhile(users, {"user": "pebbles", "active": false}), [ {"user": "barney", "active": true }, {"user": "fred", "active": false} ])
 
 ; The A.matchesProperty iteratee shorthand.
+assert.label("A.matchesProperty iteratee shorthand")
 assert.test(A.dropRightWhile(users, ["active", false]), [ {"user": "barney", "active": true } ])
 
 ; The A.property iteratee shorthand.
+assert.label("A.property iteratee shorthand")
 assert.test(A.dropRightWhile(users, "active"), [ {"user": "barney", "active": true }, {"user": "fred", "active": false }, {"user": "pebbles", "active": false} ])
 
 
 ; omit
+assert.label("empty array")
 assert.test(A.dropRightWhile([]), [])
-; check that input has not been mutated
+
+assert.label("A.property iteratee no drops")
+assert.test(A.dropRightWhile([{"user": "barney", "active": false}, {"user": "fred", "active": false}], "active"), [{"user": "barney", "active": false }, {"user": "fred", "active": false}])
+
+assert.label("A.property iteratee all dropped")
+assert.test(A.dropRightWhile([{"user": "barney", "active": false}, {"user": "fred", "active": false}], "active"), [{"user": "barney", "active": false }, {"user": "fred", "active": false}])
+
+assert.label("check that input has not been mutated")
 assert.test(users[3], {"user": "pebbles",	"active": false})
 
 assert.label("default .identity argument")
 assert.test(A.dropRightWhile(["foo", 0, "bar"]), ["foo", 0])
+
+assert.label("undefined array")
+assert.test(A.dropRightWhile([]), [])
+
+assert.label("undefined elements")
+assert.test(A.dropRightWhile(["", "", ""]), ["", "", ""])
 
 assert.group(".dropWhile")
 assert.label("default tests")
 users := [ {"user": "barney", 	"active": false }
 		, { "user": "fred", 	"active": false }
 		, { "user": "pebbles", 	"active": true } ]
-assert.test(A.dropWhile(users, Func("fn_dropWhile")), [{ "user": "pebbles", "active": true }])
+assert.test(A.dropWhile(users, func("fn_dropWhile")), [{ "user": "pebbles", "active": true }])
 fn_dropWhile(o)
 {
 	return !o.active
@@ -144,10 +190,20 @@ assert.test(A.dropWhile(users, "active"), [ {"user": "barney", "active": false }
 
 
 ; omit
+assert.label("keep all dropped")
+assert.test(A.dropWhile([{"user": "barney", "active": true}], Func("fn_dropWhile")), [{"user": "barney", "active": true}])
+
+assert.label("all dropped")
+assert.test(A.dropWhile([{"user": "barney", "active": false}, {"user": "fred", "active": false}], Func("fn_dropWhile")), [])
+
+assert.label("empty array input")
 assert.test(A.dropWhile([]), [])
 
 assert.label("default .identity argument")
 assert.test(A.dropWhile(["foo", 0, "bar"]), [0, "bar"])
+
+assert.label("undefined elements")
+assert.test(A.dropWhile(["", "", ""]), ["", "", ""])
 
 assert.group(".fill")
 assert.label("default tests")
@@ -158,8 +214,14 @@ assert.test(A.fill([4, 6, 8, 10], "*", 2, 3), [4, "*", "*", 10])
 
 ; omit
 assert.test(A.fill([]), [])
+assert.test(A.fill([1, 2, 3], "a"), ["a", "a", "a"])
+assert.test(A.fill([4, 6, 8, 10], "*", 1, 3), ["*", "*", "*", 10])
+assert.test(A.fill([4, 6, 8, 10], "*", 0, 3), ["*", "*", "*", 10], "if zero index is specified")
+assert.test(A.fill([4, 6, 8, 10], "*", 3, 1), [4, 6, 8, 10], "param_start is geater than param_end")
+
+assert.label("ensure that mutation did not occur")
 assert.test(array, [1, 2, 3])
-; ensure that mutation did not occur
+
 assert.group(".findIndex")
 assert.label("default tests")
 users := [ { "user": "barney", "age": 36, "active": true }
@@ -192,7 +254,7 @@ assert.test(A.findIndex([{"name": "fred"}, {"name": "barney"}], {"name": "barney
 StringCaseSense, Off
 
 assert.label("function")
-assert.test(A.findIndex(users, Func("fn_findIndexFunc")), 2)
+assert.test(A.findIndex(users, func("fn_findIndexFunc")), 2)
 fn_findIndexFunc(o) {
 	return o.user == "fred"
 }
@@ -205,7 +267,7 @@ assert.test(A.findIndex(users, ["active", false], 3), 3)
 
 assert.label("boundFunc")
 employees := [{"name": "Mike Smith", "tenureYears": 4}, {"name": "Nath Samuel", "tenureYears": 2}]
-boundFunc := Func("fn_checkNameTenure").bind("Mike Smith", 4)
+boundFunc := func("fn_checkNameTenure").bind("Mike Smith", 4)
 assert.test(A.findIndex(employees, boundFunc), 1)
 
 fn_checkNameTenure(name, minTenure, obj)
@@ -239,6 +301,9 @@ assert.test(A.flatten([1, [2, [3, [4]], 5]]), [1, 2, [3, [4]], 5])
 assert.test(A.flatten([[1, 2, 3], [4, 5, 6]]), [1, 2, 3, 4, 5, 6])
 
 ; omit
+assert.test(A.flatten([]), [], "Flatten an empty array")
+assert.test(A.flatten([[], [], []]), [], "Flatten an array with nested empty arrays")
+assert.test(A.flatten([1, ["", ""], [3, 4]]), [1, "", "", 3, 4], "Flatten an array with undefined elements")
 
 assert.group(".flattenDeep")
 assert.label("default tests")
@@ -248,6 +313,17 @@ assert.test(A.flattenDeep([1, [2, [3, [4]], 5]]), [1, 2, 3, 4, 5])
 
 ; omit
 assert.test(A.flattenDeep({"key": 1}), [1])
+assert.label("multiple levels of nesting")
+assert.test(A.flattenDeep([1, [2, [3, [4, [5]]]]]), [1, 2, 3, 4, 5])
+assert.label("deeply nested arrays and mixed data types")
+assert.test(A.flattenDeep([1, [2, [3, [4, ["five", [6]]]]]]), [1, 2, 3, 4, "five", 6])
+assert.label("deeply nested arrays and empty arrays")
+assert.test(A.flattenDeep([1, [2, [3, [4, [], [5, []]]]]]), [1, 2, 3, 4, 5])
+assert.label("deeply nested arrays and null/undefined elements")
+assert.test(A.flattenDeep([1, [2, [3, [4, ["", ""], [5, [""]]]]]]), [1, 2, 3, 4, "", "", 5, ""])
+assert.label("deeply nested arrays and arrays containing only non-array elements")
+assert.test(A.flattenDeep([1, [2, [3, [4, [5], [6]], [7, 8, 9]]]]), [1, 2, 3, 4, 5, 6, 7, 8, 9])
+assert.test(A.flattenDeep([]), [], "an empty array")
 
 assert.group(".flattenDepth")
 assert.label("default tests")
@@ -255,10 +331,37 @@ assert.test(A.flattenDepth([1, [2, [3, [4]], 5]], 1), [1, 2, [3, [4]], 5])
 assert.test(A.flattenDepth([1, [2, [3, [4]], 5]], 2), [1, 2, 3, [4], 5])
 
 ; omit
+assert.test(A.flattenDepth([], 1), [], "empty array with depth 1")
+assert.test(A.flattenDepth([1, [2, [3]]], 0), [1, [2, [3]]], "with depth 0")
 
 assert.group(".fromPairs")
 assert.label("default tests")
 assert.test(A.fromPairs([["a", 1], ["b", 2]]), {"a": 1, "b": 2})
+
+; omit
+assert.label("Empty array")
+assert.test(A.fromPairs([], {}), {})
+
+assert.label("Single pair")
+assert.test(A.fromPairs([["a", 1]], {"a": 1}), {"a": 1})
+
+assert.label("Multiple pairs with unique keys")
+assert.test(A.fromPairs([["a", 1], ["b", 2], ["c", 3]]), {"a": 1, "b": 2, "c": 3})
+
+assert.label("Multiple pairs with duplicate keys")
+assert.test(A.fromPairs([["a", 1], ["b", 2], ["a", 3]]), {"a": 3, "b": 2})
+
+assert.label("With keys of different types (string, number, boolean)")
+assert.test(A.fromPairs([["a", 1], [2, "two"], [true, false]]), {"1": false, "a": 1, "2": "two"})
+
+assert.label("With empty strings as keys")
+assert.test(A.fromPairs([["", 1], ["b", 2]]), {"": 1, "b": 2})
+
+assert.label("With empty values")
+assert.test(A.fromPairs([["a", ""], ["b", ""], ["c", ""]]), {"a": "", "b": "", "c": ""})
+
+assert.label("With keys containing special characters")
+assert.test(A.fromPairs([["$key", 1], ["key_2", 2], ["key-3", 3]]), {"$key": 1, "key_2": 2, "key-3": 3})
 
 assert.group(".head")
 assert.label("default tests")
@@ -273,8 +376,14 @@ assert.test(A.head({"a": 1, "b": 2, "c":3}), 1)
 
 assert.label("alias")
 assert.test(A.first([1, 2, 3]), 1)
+
+assert.label("Empty array")
 assert.test(A.first([]), "")
+
+assert.label("String as input")
 assert.test(A.first("fred"), "f")
+
+assert.label("Number as input")
 assert.test(A.first(100), "1")
 
 assert.group(".indexOf")
@@ -305,6 +414,7 @@ assert.test(A.initial(100), ["1", "0"])
 
 ; omit
 assert.test(A.initial([]), [])
+assert.test(A.initial([1]), [])
 
 assert.group(".intersection")
 assert.label("default tests")
@@ -319,6 +429,11 @@ assert.test(A.intersection([1,2,3], [0], [1,2,3]), [])
 assert.label("keyed object")
 intersectionVar := {"a": 1, "b": 2}
 assert.test(A.intersection([1,2,3], intersectionVar), [1,2])
+
+assert.test(A.intersection([], [1, 2, 3]), [], "one empty array input")
+assert.test(A.intersection([1, 2, 3], []), [], "one empty array input")
+assert.test(A.intersection([1, 2, 2, 3], [2, 3, 3, 4]), [2, 3], "duplicate interestions")
+assert.test(A.intersection(["a", "b", "c"], ["b", "c", "d"]), ["b", "c"], "non-numeric input")
 
 assert.label("no mutation of input")
 intersectionVar := [1,2,3]
@@ -335,6 +450,30 @@ assert.test(A.join(["a", "b", "c"]), "a,b,c")
 assert.test(A.join({"first": 1, "second": 2, "third": 3}), "1,2,3")
 assert.test(A.join({"first": 1, "second": 2, "third": 3}, "~"), "1~2~3")
 
+assert.label("Join an array of strings with a specified delimiter")
+assert.test(A.join(["a", "b", "c"], "~"), "a~b~c")
+
+assert.label("Join an array of strings with the default delimiter (comma)")
+assert.test(A.join(["a", "b", "c"]), "a,b,c")
+
+assert.label("Join an array of integers with a specified delimiter")
+assert.test(A.join([1, 2, 3], "~"), "1~2~3")
+
+assert.label("Join an array of mixed types with a specified delimiter")
+assert.test(A.join(["a", 1, true], "~"), "a~1~1")
+
+assert.label("Join an array with empty strings with a specified delimiter")
+assert.test(A.join(["", "b", "", "d"], "~"), "~b~~d")
+
+assert.label("Join an empty array should return an empty string")
+assert.test(A.join([]), "")
+
+assert.label("Join an array with a single element should return the element itself")
+assert.test(A.join(["hello"]), "hello")
+
+assert.label("Join an array with non-string elements should convert them to strings")
+assert.test(A.join([1, true, "", non_existant_var]), "1,1,,")
+
 assert.group(".last")
 assert.label("default tests")
 assert.test(A.last([1, 2, 3]), 3)
@@ -349,14 +488,41 @@ array := [1, 2, "hey"]
 assert.test(A.last(array), "hey")
 assert.test(array.count(), 3)
 
+assert.label("Array with last element as array")
+assert.test(A.last([1, 2, [3, 4]]), [3, 4])
+
+assert.label("Array with last element as associative array")
+assert.test(A.last([1, {"a": 1, "b": 2}]), {"a": 1, "b": 2})
+
+assert.label("Array with last element as empty associative array")
+assert.test(A.last([1, {}]), {})
+
+assert.label("String with last character as whitespace")
+assert.test(A.last("Hello "), " ")
+
+assert.label("String with last character as special character")
+assert.test(A.last("Hello!"), "!")
+
+assert.label("String with last character as number")
+assert.test(A.last("12345"), "5")
+
+assert.label("String with last character as special symbol")
+assert.test(A.last("Hello$"), "$")
+
+assert.label("Number with multiple digits")
+assert.test(A.last(12345), "5")
+
 assert.group(".lastIndexOf")
 assert.label("default tests")
+assert.label("Array with multiple occurrences of the search element")
 assert.test(A.lastIndexOf([1, 2, 1, 2], 2), 4)
 
 ; Search from the `fromIndex`.
+assert.label("Search from the specified index")
 assert.test(A.lastIndexOf([1, 2, 1, 2], 1, 2), 1)
 
 StringCaseSense, On
+assert.label("Case-sensitive search with no match")
 assert.test(A.lastIndexOf(["fred", "barney"], "Fred"), -1)
 
 
@@ -365,28 +531,53 @@ StringCaseSense, Off
 
 assert.group(".nth")
 assert.label("default tests")
+assert.label("Array with positive index")
 assert.test(A.nth([1, 2, 3]), 1)
+assert.label("Array with negative index")
 assert.test(A.nth([1, 2, 3], -3), 1)
+assert.label("Array with index out of range")
 assert.test(A.nth([1, 2, 3], 5), "")
+assert.label("String as input")
 assert.test(A.nth("fred"), "f")
+assert.label("Number as input")
 assert.test(A.nth(100), "1")
+assert.label("Array with index 0")
 assert.test(A.nth([1, 2, 3], 0), 1)
 
 
 ; omit
+assert.label("empty array input")
 assert.test(A.nth([]), "")
 
 assert.group(".reverse")
 assert.label("default tests")
+assert.label("Array with strings")
 assert.test(A.reverse(["a", "b", "c"]), ["c", "b", "a"])
+assert.label("Array with mixed types including objects")
 assert.test(A.reverse([{"foo": "bar"}, "b", "c"]), ["c", "b", {"foo": "bar"}])
+assert.label("Array with nested arrays")
 assert.test(A.reverse([[1, 2, 3], "b", "c"]), ["c", "b", [1, 2, 3]])
 
 ; omit
-; ensure no mutation
+assert.label("Ensure no mutation")
 reverseVar := [1,2,3]
 assert.test(A.reverse(reverseVar), [3, 2, 1])
 assert.test(reverseVar, [1,2,3])
+
+assert.label("Empty array")
+assert.test(A.reverse([]), [])
+
+assert.label("Array with a single element")
+assert.test(A.reverse(["a"]), ["a"])
+
+assert.label("Array with multiple elements")
+assert.test(A.reverse(["a", "b", "c"]), ["c", "b", "a"])
+
+assert.label("Array with nested arrays")
+assert.test(A.reverse([[1, 2], [3, 4], [5, 6]]), [[5, 6], [3, 4], [1, 2]])
+
+assert.label("Array with mixed types")
+assert.test(A.reverse(["a", 1, true]), [true, 1, "a"])
 
 assert.group(".slice")
 assert.label("default tests")
@@ -398,12 +589,39 @@ assert.test(A.slice(100), ["1", "0", "0"])
 
 
 ; omit
+assert.label("Array with negative start index")
+assert.test(A.slice([1, 2, 3], -2), [2, 3])
+assert.test(A.slice([1, 2, 3], -5), [1, 2, 3])
+
+assert.label("Array with negative end index")
+assert.test(A.slice([1, 2, 3], 0, -1), [1, 2])
+
+assert.label("Array with negative start and end indices")
+assert.test(A.slice([1, 2, 3], -2, -1), [2])
+
+assert.label("Array with start index greater than end index")
+assert.test(A.slice([1, 2, 3], 2, 1), [])
+assert.test(A.slice([1, 2, 3], 100, 1), [])
+
+assert.label("undefined elements")
+assert.test(A.slice([1, 2, "", 4], 1, 4), [1, 2, "", 4])
+
+assert.label("empty array")
+assert.test(A.slice([], 1, 4), [])
+
+assert.label("partial string")
+assert.test(A.slice("hello", 1, 2), ["h", "e"])
 
 assert.group(".sortedIndex")
 assert.label("default tests")
+assert.label("Insert value into sorted array at the beginning")
 assert.test(A.sortedIndex([30, 50], 40),2)
+assert.label("Insert value into sorted array at the middle")
 assert.test(A.sortedIndex([30, 50], 20),1)
+assert.label("Insert value into sorted array at the end")
 assert.test(A.sortedIndex([30, 50], 99),3)
+
+; omit
 
 assert.group(".sortedUniq")
 assert.label("default tests")
@@ -415,10 +633,27 @@ StringCaseSense, On
 assert.test(A.sortedUniq(["Fred", "Barney", "barney", "barney"]), ["Fred", "Barney", "barney"])
 StringCaseSense, off
 
+assert.label("Array with multiple duplicates")
 arr := [1, 2, 3, 3, 4, 4, 5, 6, 7, 7, 7, 8, 8, 9, 10]
 arr2 := A.sortedUniq(arr)
 assert.test(arr.count(), 15)
 assert.test(arr2.count(), 10)
+
+assert.test(A.sortedUniq([4, 1, 2, 3]), [4, 1, 2, 3])
+
+assert.label("Array with no duplicates")
+assert.test(A.sortedUniq([1, 2, 3]), [1, 2, 3])
+
+assert.label("Array with string types and duplicates")
+assert.test(A.sortedUniq(["apple", "banana", "banana", "orange", "orange", "orange", "peach"]), ["apple", "banana", "orange", "peach"])
+
+assert.label("Empty array")
+assert.test(A.sortedUniq([]), [])
+
+assert.label("No mutation of input array")
+arr := [1, 2, 2, 3, 3, 3]
+A.sortedUniq(arr)
+assert.test(arr, [1, 2, 2, 3, 3, 3])
 
 assert.group(".tail")
 assert.label("default tests")
@@ -428,6 +663,28 @@ assert.test(A.tail(100), ["0", "0"])
 
 ; omit
 assert.test(A.tail([]), [])
+assert.label("Array with a single element")
+assert.test(A.tail([1]), [])
+
+assert.label("Array with two elements")
+assert.test(A.tail([1, 2]), [2])
+
+assert.label("Array with multiple elements")
+assert.test(A.tail([1, 2, 3, 4]), [2, 3, 4])
+
+assert.label("String with a single character")
+assert.test(A.tail("f"), [])
+
+assert.label("String with two characters")
+assert.test(A.tail("fe"), ["e"])
+
+assert.label("String with multiple characters")
+assert.test(A.tail("fred"), ["r", "e", "d"])
+
+assert.label("Number input")
+assert.test(A.tail(100), ["0", "0"])
+
+assert.test(A.tail([5]), [])
 
 assert.group(".take")
 assert.label("default tests")
@@ -438,7 +695,29 @@ assert.test(A.take([1, 2, 3], 0), [])
 assert.test(A.take("fred"), ["f"])
 assert.test(A.take(100), ["1"])
 ; omit
+assert.label("Empty array input")
 assert.test(A.take([]), [])
+
+assert.label("Array with a single element")
+assert.test(A.take([1], 1), [1])
+
+assert.label("Array with two elements")
+assert.test(A.take([1, 2], 1), [1])
+
+assert.label("Array with multiple elements")
+assert.test(A.take([1, 2, 3, 4], 3), [1, 2, 3])
+
+assert.label("String with a single character")
+assert.test(A.take("f", 1), ["f"])
+
+assert.label("String with two characters")
+assert.test(A.take("fe", 1), ["f"])
+
+assert.label("String with multiple characters")
+assert.test(A.take("fred", 2), ["f", "r"])
+
+assert.label("Number")
+assert.test(A.take(100, 1), ["1"])
 
 assert.group(".takeRight")
 assert.label("default tests")
@@ -462,6 +741,27 @@ obj := [1, 2, 3]
 assert.test(A.takeRight(obj), [3])
 assert.test(obj, [1, 2, 3])
 
+assert.label("Array with a single element")
+assert.test(A.takeRight([1], 1), [1])
+
+assert.label("Array with two elements")
+assert.test(A.takeRight([1, 2], 1), [2])
+
+assert.label("Array with multiple elements")
+assert.test(A.takeRight([1, 2, 3, 4], 2), [3, 4])
+
+assert.label("String with a single character")
+assert.test(A.takeRight("f", 1), ["f"])
+
+assert.label("String with two characters")
+assert.test(A.takeRight("fe", 1), ["e"])
+
+assert.label("String with multiple characters")
+assert.test(A.takeRight("fred", 2), ["e", "d"])
+
+assert.label("Number input")
+assert.test(A.takeRight(100, 1), ["0"])
+
 assert.group(".union")
 assert.label("default tests")
 assert.test(A.union([2], [1, 2]), [2, 1])
@@ -470,6 +770,21 @@ assert.test(A.union([2], [1, 2]), [2, 1])
 ; omit
 assert.test(A.union(["Fred", "Barney", "barney", "barney"]), ["Fred", "Barney", "barney"])
 assert.test(A.union("hello!"), ["hello!"])
+
+assert.label("Arrays with no common elements")
+assert.test(A.union([1, 2, 3], [4, 5, 6]), [1, 2, 3, 4, 5, 6])
+
+assert.label("Arrays with some common elements")
+assert.test(A.union([1, 2, 3], [3, 4, 5]), [1, 2, 3, 4, 5])
+
+assert.label("Arrays with all elements identical")
+assert.test(A.union([1, 2, 3], [1, 2, 3]), [1, 2, 3])
+
+assert.label("Arrays with identical elements but in different orders")
+assert.test(A.union([1, 2, 3], [3, 2, 1]), [1, 2, 3])
+
+assert.label("Empty arrays")
+assert.test(A.union([], []), [])
 
 assert.group(".uniq")
 assert.label("default tests")
@@ -484,6 +799,18 @@ arr2 := A.uniq(arr)
 assert.test(arr.count(), 15)
 assert.test(arr2.count(), 14)
 
+assert.label("Array with duplicate elements")
+assert.test(A.uniq([2, 1, 2]), [2, 1])
+
+assert.label("Array with no duplicate elements")
+assert.test(A.uniq([1, 2, 3]), [1, 2, 3])
+
+assert.label("Array with all elements identical")
+assert.test(A.uniq([1, 1, 1]), [1])
+
+assert.label("Empty array")
+assert.test(A.uniq([]), [])
+
 assert.group(".unzip")
 assert.label("default tests")
 zipped := A.zip(["a", "b"], [1, 2], [true, false])
@@ -492,15 +819,24 @@ assert.test(A.unzip(zipped), [["a", "b"], [1, 2], [true, false]])
 
 
 ; omit
+assert.label("Empty array")
+assert.test(A.unzip([]), [])
 
 assert.group(".without")
 assert.label("default tests")
+assert.label("Array with multiple instances of the excluded elements")
 assert.test(A.without([2, 1, 2, 3], 1, 2), [3])
 
 
 ; omit
-assert.test(A.without([2, 1, 2, 3], 1), [2, 3])
-assert.test(A.without([2, 1, 2, 3], 1, 2, 3), [])
+assert.label("Array with single instance of the excluded element")
+assert.test(A.without([2, 1, 2, 3], 1), [2, 2, 3])
+
+assert.label("Array with no excluded elements")
+assert.test(A.without([2, 1, 2, 3], 4), [2, 1, 2, 3])
+
+assert.label("Empty array")
+assert.test(A.without([], 1, 2), [])
 
 assert.group(".zip")
 assert.label("default tests")
@@ -543,15 +879,19 @@ assert.test(A.count(users, "active"), 1)
 ; omit
 assert.label("double characters")
 assert.test(A.count("pebbles", "bb"), 1)
-assert.label("double characters2")
+assert.label("non alnum input")
 assert.test(A.count("3.14", "."), 1)
+assert.label("with double special character parameter")
 assert.test(A.count("....", ".."), 2)
+assert.label("with space character parameter")
 assert.test(A.count("   ", "test"), 0)
+assert.label("with numeric input")
 assert.test(A.count(1221221221, 22), 3)
+
 
 assert.group(".countBy")
 assert.label("default tests")
-assert.test(A.countBy([6.1, 4.2, 6.3], Func("floor")), {"4": 1, "6": 2})
+assert.test(A.countBy([6.1, 4.2, 6.3], func("floor")), {"4": 1, "6": 2})
 
 ; The A.property iteratee shorthand.
 assert.test(A.countBy(["one", "two", "three"], A.size), {"3": 2, "5": 1})
@@ -563,6 +903,10 @@ wordOccurances := A.countBy(["one", "two", "three", "one", "two", "three"], A.to
 assert.equal(wordOccurances, {"one": 2, "two": 2, "three": 2})
 wordOccurances := A.countBy(["one", "two", "three", "one", "two", "three"])
 assert.equal(wordOccurances, {"one": 2, "two": 2, "three": 2})
+
+assert.test(A.countBy(["one", "two", "three", "four"], A.size), {"3": 2, "4": 1, "5": 1})
+
+assert.test(A.countBy(["one", "two", "three", "one", "two", "three", "four"], A.toLower), {"one": 2, "two": 2, "three": 2, "four": 1})
 
 assert.group(".every")
 assert.label("default tests")
@@ -591,7 +935,7 @@ isPositive(value) {
 	return false
 }
 
-assert.false(A.every([true, false, true, true], Func("fn_istrue")))
+assert.false(A.every([true, false, true, true], func("fn_istrue")))
 fn_istrue(value)
 {
 	if (value != true) {
@@ -599,7 +943,7 @@ fn_istrue(value)
 	}
 	return true
 }
-assert.true(A.every([true, true, true, true], Func("fn_istrue")))
+assert.true(A.every([true, true, true, true], func("fn_istrue")))
 
 
 userVotes := [{"name":"fred", "votes": ["yes","yes"]}
@@ -625,7 +969,7 @@ assert.group(".filter")
 assert.label("default tests")
 users := [{"user":"barney", "age":36, "active":true}, {"user":"fred", "age":40, "active":false}]
 
-assert.test(A.filter(users, Func("fn_filterFunc")), [{"user":"barney", "age":36, "active":true}])
+assert.test(A.filter(users, func("fn_filterFunc")), [{"user":"barney", "age":36, "active":true}])
 fn_filterFunc(param_iteratee)
 {
 	if (param_iteratee.active) {
@@ -655,7 +999,7 @@ assert.test(A.filter(users, A.isObject), users)
 
 
 assert.label("using value")
-assert.test(A.filter([1,2,3,-10,1.9], Func("fn_filter2")), [2,3])
+assert.test(A.filter([1,2,3,-10,1.9], func("fn_filter2")), [2,3])
 fn_filter2(param_iteratee) {
 	if (param_iteratee >= 2) {
 		return true
@@ -663,7 +1007,7 @@ fn_filter2(param_iteratee) {
 }
 
 assert.label("using value and key")
-assert.test(A.filter([1,2,3,-10,1.9,"even"], Func("fn_filter3")), [2,-10,"even"])
+assert.test(A.filter([1,2,3,-10,1.9,"even"], func("fn_filter3")), [2,-10,"even"])
 fn_filter3(param_iteratee, param_key) {
 	if (mod(param_key, 2) = 0) {
 		return true
@@ -671,7 +1015,7 @@ fn_filter3(param_iteratee, param_key) {
 }
 
 assert.label("using value, key, and collection")
-assert.test(A.filter([1,2,3,-10,1.9,"even"], Func("fn_filter4")), [2])
+assert.test(A.filter([1,2,3,-10,1.9,"even"], func("fn_filter4")), [2])
 fn_filter4(param_iteratee, param_key, param_collection) {
 	A := new biga()
 	if (mod(param_key, 2) = 0 && A.indexOf(param_collection, param_iteratee / 2) != -1) {
@@ -685,7 +1029,7 @@ users := [ {"user": "barney", "age": 36, "active": true}
 	, {"user": "fred", "age": 40, "active": false}
 	, {"user": "pebbles", "age": 1, "active": true} ]
 
-assert.test(A.find(users, Func("fn_findFunc")), { "user": "barney", "age": 36, "active": true })
+assert.test(A.find(users, func("fn_findFunc")), { "user": "barney", "age": 36, "active": true })
 fn_findFunc(o)
 {
 	return o.active
@@ -707,13 +1051,17 @@ assert.test(A.find(users, "active", 2), { "user": "pebbles", "age": 1, "active":
 
 assert.group(".findLast")
 assert.label("default tests")
-assert.test(A.findLast([1, 2, 3, 4], Func("fn_findLastFunc")), 3)
+assert.test(A.findLast([1, 2, 3, 4], func("fn_findLastFunc")), 3)
 fn_findLastFunc(n)
 {
 	return mod(n, 2) == 1
 }
 
+
 ; omit
+assert.test(A.findLast([2, 4, 6, 7, 8], func("fn_findLastFunc")), 7)
+
+assert.test(A.findLast([1, 2, 3, 4, 5, 6], func("fn_findLastFunc")), 5)
 
 assert.group(".forEach")
 assert.label("default tests")
@@ -722,7 +1070,7 @@ assert.label("default tests")
 ; omit
 assert.label("order")
 obj := []
-A.forEach([1, 2], Func("fn_forEachGlobal"))
+A.forEach([1, 2], func("fn_forEachGlobal"))
 assert.test(obj, [2, 3])
 fn_forEachGlobal(value)
 {
@@ -732,10 +1080,17 @@ fn_forEachGlobal(value)
 
 
 assert.label("alias")
-assert.test(A.each([1, 2], Func("fn_forEachFunc")), [1, 2])
+assert.test(A.each([1, 2], func("fn_forEachFunc")), [1, 2])
 
 assert.label("default .identity argument")
 assert.test(A.forEach(["foo", 0, "bar"]), ["foo", 0, "bar"])
+
+assert.test(A.forEach([], func("fn_forEachGlobal")), [])
+
+assert.test(A.forEach([5], func("fn_forEachGlobal")), [5])
+
+assert.label("with own method")
+assert.test(A.forEach(["apple", "banana", "cherry"], A.size()), ["apple", "banana", "cherry"])
 
 assert.group(".forEachRight")
 assert.label("default tests")
@@ -744,7 +1099,7 @@ assert.label("default tests")
 ; omit
 assert.label("order")
 obj := []
-A.forEachRight([1, 2], Func("fn_forEachRightFuncGlobal"))
+A.forEachRight([1, 2], func("fn_forEachRightFuncGlobal"))
 assert.test(obj, [3, 2])
 fn_forEachRightFuncGlobal(value)
 {
@@ -754,10 +1109,18 @@ fn_forEachRightFuncGlobal(value)
 
 
 assert.label("alias")
-assert.test(A.eachRight([1, 2], Func("fn_forEachRightFuncGlobal")), [1, 2])
+assert.test(A.eachRight([1, 2], func("fn_forEachRightFuncGlobal")), [1, 2])
 
 assert.label("default .identity argument")
-assert.test(A.forEachRight([1, 2], Func("fn_forEachRightFunc")), [1, 2])
+assert.test(A.forEachRight([1, 2], func("fn_forEachRightFunc")), [1, 2])
+
+assert.label("with own method")
+assert.test(A.forEach(["apple", "banana", "cherry"], A.size()), ["apple", "banana", "cherry"])
+
+assert.label("no mutation")
+arr := ["apple", "banana", "cherry"]
+A.forEach(["apple", "banana", "cherry"], A.size())
+assert.test(arr, ["apple", "banana", "cherry"])
 
 assert.group(".groupBy")
 assert.label("default tests")
@@ -795,11 +1158,17 @@ assert.false(A.includes("inStr", "Other"))
 assert.label("object search")
 assert.true(A.includes([[1], [2]], [2]))
 
+assert.label("not found")
+assert.false(A.includes([1, 2, 3], 4))
+
+assert.label("not found")
+assert.false(A.includes({ "a": 1, "b": 2 }, 3))
+
 assert.group(".keyBy")
 assert.label("default tests")
 array := [ {"dir": "left", "code": 97}
 	, {"dir": "right", "code": 100}]
-assert.test(A.keyBy(array, Func("fn_keyByFunc")), {"left": {"dir": "left", "code": 97}, "right": {"dir": "right", "code": 100}})
+assert.test(A.keyBy(array, func("fn_keyByFunc")), {"left": {"dir": "left", "code": 97}, "right": {"dir": "right", "code": 100}})
 
 fn_keyByFunc(value)
 {
@@ -808,6 +1177,7 @@ fn_keyByFunc(value)
 
 ; The A.property iteratee shorthand.
 assert.test(A.keyBy(array, "dir"), {"left": {"dir": "left", "code": 97}, "right": {"dir": "right", "code": 100}})
+
 
 ; omit
 assert.label("default .identity argument")
@@ -820,14 +1190,15 @@ fn_square(n)
 	return n * n
 }
 
-assert.test(A.map([4, 8], Func("fn_square")), [16, 64])
-assert.test(A.map({ "a": 4, "b": 8 }, Func("fn_square")), [16, 64])
+assert.test(A.map([4, 8], func("fn_square")), [16, 64])
+assert.test(A.map({ "a": 4, "b": 8 }, func("fn_square")), [16, 64])
 assert.test(A.map({ "a": 4, "b": 8 }), [4, 8])
 
 ; The A.property shorthand
 assert.label(".property shorthand")
 users := [{ "user": "barney" }, { "user": "fred" }]
 assert.test(A.map(users, "user"), ["barney", "fred"])
+
 
 ; omit
 assert.label("call own biga.ahk method (guarded)")
@@ -837,14 +1208,14 @@ assert.label("call own biga.ahk method (unguarded)")
 assert.test(A.map(["hello", "world"], A.castArray), [["hello"], ["world"]])
 
 assert.label("call with 2 parameters")
-assert.test(A.map([1, 2], Func("fn_map2")), ["1-1", "2-2"])
+assert.test(A.map([1, 2], func("fn_map2")), ["1-1", "2-2"])
 fn_map2(param1, param2)
 {
 	return param1 "-" param2
 }
 
 assert.label("call with 3 parameters")
-assert.test(A.map([1, 2], Func("fn_map3")), ["1-1-1", "2-2-1"])
+assert.test(A.map([1, 2], func("fn_map3")), ["1-1-1", "2-2-1"])
 fn_map3(param1, param2, param3)
 {
 	return param1 "-" param2 "-" param3[1]
@@ -885,11 +1256,14 @@ assert.test(A.partition(users, "active"), [[{ "user": "fred", "age": 40, "active
 assert.label("default .identity argument")
 assert.test(A.partition([1, 2, 3]), [[1, 2, 3], []])
 
+assert.label("empty array input")
+assert.test(A.partition([]), [[], []])
+
 assert.group(".reject")
 assert.label("default tests")
 users := [{"user":"barney", "age":36, "active":false}, {"user":"fred", "age":40, "active":true}]
 
-assert.test(A.reject(users, Func("fn_rejectFunc")), [{"user":"fred", "age":40, "active":true}])
+assert.test(A.reject(users, func("fn_rejectFunc")), [{"user":"fred", "age":40, "active":true}])
 fn_rejectFunc(o)
 {
 	return !o.active
@@ -908,6 +1282,16 @@ assert.test(A.reject(users, "active"), [{"user":"barney", "age":36, "active":fal
 ; omit
 assert.label("default .identity argument")
 assert.test(A.reject([0, 1, 2]), [0])
+
+assert.label("rejecting objects where the object is exact match")
+assert.test(A.reject(users, {"user": "barney"}), [{"user":"fred", "age":40, "active":true}])
+
+assert.label("rejecting objects where the age is less than 40")
+assert.test(A.reject(users, func("fn_ageLessThan40")), [{"user":"fred", "age":40, "active":true}])
+fn_ageLessThan40(o)
+{
+	return o.age < 40
+}
 
 assert.group(".sample")
 assert.label("default tests")
@@ -929,6 +1313,10 @@ assert.label("string input")
 output := A.sample("abc")
 assert.true(A.includes(["a", "b", "c"], output))
 assert.true(A.isString(output))
+
+assert.label("empty input")
+assert.test(A.size(A.sample([])), 0)
+assert.undefinded(A.sample([]))
 
 assert.group(".sampleSize")
 assert.label("default tests")
@@ -981,6 +1369,11 @@ assert.test(shuffleTestVar.count(), 2)
 assert.test(shuffleTestVar[1], 1)
 assert.test(shuffleTestVar[2], 1)
 
+assert.label("no mutation of input object")
+arr := [1, 2, 3, 4, 5]
+A.shuffle(arr)
+assert.test(arr, [1, 2, 3, 4, 5])
+
 assert.group(".size")
 assert.label("default tests")
 assert.test(A.size([1, 2, 3]), 3)
@@ -991,6 +1384,8 @@ assert.test(A.size("pebbles"), 7)
 ; omit
 assert.label("empty array")
 assert.test(A.size([]), 0)
+assert.test(A.size({}), 0)
+
 assert.label("objects")
 users := [{"user": "barney", "active": true}
 	, {"user": "fred", "active": false}
@@ -999,6 +1394,9 @@ assert.test(A.size(users), 3)
 
 assert.label("empty values")
 assert.test(A.size(["A", "", "C"]), 3)
+
+assert.label("empty string input")
+assert.test(A.size(""), 0)
 
 assert.group(".some")
 assert.label("default tests")
@@ -1031,7 +1429,7 @@ users := [{ "name": "fred", "age": 40 }
 
 assert.test(A.sortBy(users, "age"), [{"age":34, "name":"barney"}, {"age":36, "name":"bernard"}, {"age":40, "name":"zoey"}, {"age":40, "name":"fred"}])
 assert.test(A.sortBy(users, ["age", "name"]), [{"age":34, "name":"barney"}, {"age":36, "name":"bernard"}, {"age":40, "name":"fred"}, {"age":40, "name":"zoey"}])
-assert.test(A.sortBy(users, Func("fn_sortByFunc")), [{"age":34, "name":"barney"}, {"age":36, "name":"bernard"}, {"age":40, "name":"fred"}, {"age":40, "name":"zoey"}])
+assert.test(A.sortBy(users, func("fn_sortByFunc")), [{"age":34, "name":"barney"}, {"age":36, "name":"bernard"}, {"age":40, "name":"fred"}, {"age":40, "name":"zoey"}])
 fn_sortByFunc(o)
 {
 	return o.name
@@ -1078,10 +1476,12 @@ assert.group(".now")
 assert.label("default tests")
 
 
-
 ; omit
 assert.label("timestamps have 13 digits")
 assert.test(A.size(A.now()), 13)
+
+assert.label("number output")
+assert.true(A.isNumber(A.now()))
 
 assert.group(".ary")
 assert.label("default tests")
@@ -1094,6 +1494,13 @@ fn_aryFunc(arguments*) {
 
 
 ; omit
+assert.label("with zero params")
+aryFunc := A.ary(Func("fn_aryFunc"), 0)
+assert.test(aryFunc.call("a", "b", "c", "d"), [])
+
+assert.label("with one param")
+aryFunc := A.ary(Func("fn_aryFunc"), 1)
+assert.test(aryFunc.call("a", "b", "c", "d"), ["a"])
 
 assert.group(".delay")
 assert.label("default tests")
@@ -1113,7 +1520,7 @@ fn_delayTest(msg, msg2) {
 	assert.test(msg " " msg2, "hello world")
 }
 ; same but as a boundfunc
-boundfunc := Func("fn_delayTest").bind("hello", "world")
+boundfunc := func("fn_delayTest").bind("hello", "world")
 A.delay(boundfunc, 10)
 
 A.delay(Func("fn_delayTest2"), 10)
@@ -1124,7 +1531,7 @@ fn_delayTest2() {
 	assert.test("hello world", "hello world")
 }
 ; same but as a boundfunc
-boundfunc := Func("fn_delayTest2").bind()
+boundfunc := func("fn_delayTest2").bind()
 A.delay(boundfunc, 10)
 
 assert.group(".flip")
@@ -1137,6 +1544,15 @@ assert.test(flippedFunc2.call("a", "b", "c", "d"), ["d", "c", "b", "a"])
 
 fn_flipFunc(arguments*) {
 	return biga.toArray(arguments)
+}
+
+
+; omit
+flippedFunc3 := A.flip(Func("fn_flipEmptyFunc"))
+assert.test(flippedFunc3.call(), [])
+
+fn_flipEmptyFunc() {
+    return []
 }
 
 assert.group(".internal")
@@ -1153,7 +1569,41 @@ assert.true(A.isFalsey(""))
 assert.false(A.isFalsey([]))
 assert.false(A.isFalsey({}))
 
+
 ; omit
+assert.group("._internal_MD5")
+; assert.label("boolean value")
+; assert.test(A._internal_MD5(true), [true])
+; assert.test(A._internal_MD5(false), [false])
+
+; assert.label("an undefined value")
+; assert.test(A._internal_MD5(non_existant_var), [non_existant_var])
+; assert.test(A._internal_MD5(""), [""])
+
+; assert.label("number that is not 1")
+; assert.test(A._internal_MD5(0), [0])
+; assert.test(A._internal_MD5(2), [2])
+
+; assert.label("string input")
+; assert.test(A._internal_MD5("def"), ["def"])
+
+; assert.label("complex object")
+; assert.test(A._internal_MD5({"a": 1, "b": 2}), {"a": 1, "b": 2})
+
+; assert.label("an array of multiple elements")
+; assert.test(A._internal_MD5([1, 2, 3, 4]), [1, 2, 3, 4])
+
+; assert.label("an empty object")
+; assert.test(A._internal_MD5({}), [{}])
+
+; assert.label("an empty array")
+; assert.test(A._internal_MD5([]), [[]])
+
+; assert.label("string containing special characters")
+; assert.test(A._internal_MD5("@#$%^&*()"), ["@#$%^&*()"])
+
+; assert.label("negative number")
+; assert.test(A._internal_MD5(-1), [-1])
 
 assert.group(".castArray")
 assert.label("default tests")
@@ -1165,6 +1615,38 @@ assert.test(A.castArray(""), [""])
 
 ; omit
 assert.test(A.castArray([1, 2, 3]), [1, 2, 3])
+
+assert.label("boolean value")
+assert.test(A.castArray(true), [true])
+assert.test(A.castArray(false), [false])
+
+assert.label("an undefined value")
+assert.test(A.castArray(""), [""])
+
+assert.label("number that is not 1")
+assert.test(A.castArray(0), [0])
+assert.test(A.castArray(2), [2])
+
+assert.label("string input")
+assert.test(A.castArray("ghi"), ["ghi"])
+
+assert.label("complex object")
+assert.test(A.castArray({"a": 1, "b": 2}), {"a": 1, "b": 2})
+
+assert.label("an array of multiple elements that is not [1, 2, 3]")
+assert.test(A.castArray([4, 5, 6]), [4, 5, 6])
+
+assert.label("an empty object")
+assert.test(A.castArray({}), [{}])
+
+assert.label("an empty array")
+assert.test(A.castArray([]), [[]])
+
+assert.label("string containing special characters")
+assert.test(A.castArray("@#$%^&*()"), ["@#$%^&*()"])
+
+assert.label("negative number")
+assert.test(A.castArray(-1), [-1])
 
 assert.group(".clone")
 assert.label("default tests")
@@ -1179,6 +1661,36 @@ var := 33
 clone := A.clone(var)
 clone++
 assert.notEqual(var, clone)
+
+assert.label("boolean value")
+assert.test(A.clone(true), true)
+assert.test(A.clone(false), false)
+
+assert.label("undefined value")
+assert.test(A.clone(""), "")
+
+assert.label("number that is not 33")
+assert.test(A.clone(0), 0)
+assert.test(A.clone(2), 2)
+
+assert.label("string")
+assert.test(A.clone("abc"), "abc")
+
+assert.label("array of multiple elements")
+assert.test(A.clone([4, 5, 6]), [4, 5, 6])
+
+assert.label("empty object")
+assert.test(A.clone({}), {})
+
+assert.label("empty array")
+assert.test(A.clone([]), [])
+
+assert.label("string containing special characters")
+assert.test(A.clone("@#$%^&*()"), "@#$%^&*()")
+
+; Test with a negative number:
+assert.label("negative number")
+assert.test(A.clone(-1), -1)
 
 assert.group(".cloneDeep")
 assert.label("default tests")
@@ -1199,8 +1711,8 @@ assert.group(".conformsTo")
 assert.label("default tests")
 object := {"a": 1, "b": 2}
 
-assert.true(A.conformsTo(object, {"b": Func("fn_conformsToFunc1")}))
-assert.false(A.conformsTo(object, {"b": Func("fn_conformsToFunc2")}))
+assert.true(A.conformsTo(object, {"b": func("fn_conformsToFunc1")}))
+assert.false(A.conformsTo(object, {"b": func("fn_conformsToFunc2")}))
 
 fn_conformsToFunc1(n)
 {
@@ -1212,9 +1724,22 @@ fn_conformsToFunc2(n)
 	return n > 2
 }
 
+
 ; omit
 object := {"a": 1, "b": 2, "c": 2}
-assert.true(A.conformsTo(object, {"b": Func("fn_conformsToFunc1"), "c": Func("fn_conformsToFunc1")}))
+assert.true(A.conformsTo(object, {"b": func("fn_conformsToFunc1"), "c": func("fn_conformsToFunc1")}))
+
+assert.label("Testing with a different object")
+assert.true(A.conformsTo({"a": 3, "b": 4}, {"b": func("fn_conformsToFunc1")}))
+
+assert.label("Testing with an extra key in the object")
+assert.true(A.conformsTo({"a": 1, "b": 2, "c": 3}, {"b": func("fn_conformsToFunc1")}))
+
+assert.label("Testing with a missing key in the object")
+assert.false(A.conformsTo({"a": 1}, {"b": func("fn_conformsToFunc1")}))
+
+assert.label("Testing with an empty object")
+assert.false(A.conformsTo({}, {"b": func("fn_conformsToFunc1")}))
 
 assert.group(".eq")
 assert.label("default tests")
@@ -1225,7 +1750,31 @@ assert.true(A.eq(object, other))
 assert.true(A.eq("a", "a"))
 assert.true(A.eq("", ""))
 
+
 ; omit
+assert.label("different object")
+assert.false(A.eq({"a": 2}, {"a": 1}))
+
+assert.label("different string")
+assert.false(A.eq("b", "a"))
+
+assert.label("different empty string")
+assert.false(A.eq(" ", ""))
+
+assert.label("number")
+assert.true(A.eq(1, 1))
+
+assert.label("different number")
+assert.false(A.eq(2, 1))
+
+assert.label("boolean")
+assert.true(A.eq(true, true))
+
+assert.label("different boolean")
+assert.false(A.eq(true, false))
+
+assert.label("Testing with undefined values")
+assert.true(A.eq("", ""))
 
 assert.group(".gt")
 assert.label("default tests")
@@ -1233,7 +1782,34 @@ assert.true(A.gt(3, 1))
 assert.false(A.gt(3, 3))
 assert.false(A.gt(1, 3))
 
+
 ; omit
+assert.label("equal numbers")
+assert.false(A.gt(1, 1))
+
+assert.label("smaller first number")
+assert.false(A.gt(1, 2))
+
+assert.label("zero as first number")
+assert.false(A.gt(0, 1))
+
+assert.label("zero as second number")
+assert.true(A.gt(1, 0))
+
+assert.label("negative numbers")
+assert.true(A.gt(-1, -2))
+
+assert.label("negative and positive number")
+assert.false(A.gt(-1, 1))
+
+assert.label("fractions")
+assert.true(A.gt(0.5, 0.2))
+
+assert.label("equal fractions")
+assert.false(A.gt(0.5, 0.5))
+
+assert.label("large numbers")
+assert.true(A.gt(1000000, 999999))
 
 assert.group(".gte")
 assert.label("default tests")
@@ -1241,29 +1817,113 @@ assert.true(A.gte(3, 1))
 assert.true(A.gte(3, 3))
 assert.false(A.gte(1, 3))
 
+
 ; omit
+assert.label("smaller first number")
+assert.false(A.gte(1, 2))
+
+assert.label("zero as first number")
+assert.false(A.gte(0, 1))
+
+assert.label("zero as second number")
+assert.true(A.gte(1, 0))
+
+assert.label("negative numbers")
+assert.true(A.gte(-1, -2))
+
+assert.label("equal negative numbers")
+assert.true(A.gte(-1, -1))
+
+assert.label("negative and positive number")
+assert.false(A.gte(-1, 1))
+
+assert.label("fractions")
+assert.true(A.gte(0.5, 0.2))
+
+assert.label("equal fractions")
+assert.true(A.gte(0.5, 0.5))
+
+assert.label("smaller fraction as first number")
+assert.false(A.gte(0.2, 0.5))
+
+assert.label("large numbers")
+assert.true(A.gte(1000000, 999999))
+
+assert.label("equal large numbers")
+assert.true(A.gte(1000000, 1000000))
 
 assert.group(".isAlnum")
 assert.label("default tests")
-
 assert.true(A.isAlnum(1))
 assert.true(A.isAlnum("hello"))
 assert.false(A.isAlnum([]))
 assert.false(A.isAlnum({}))
 
+
 ; omit
+assert.label("number preceeded by zero")
 assert.true(A.isAlnum("08"))
+
+assert.label("number preceeded by zeros")
+assert.true(A.isAlnum("0000008"))
+
+assert.label("Testing with a number string")
+assert.true(A.isAlnum("123"))
+
+assert.label("Testing with a alphanumeric string")
+assert.true(A.isAlnum("abc123"))
+
+assert.label("Testing with a string containing special characters")
+assert.false(A.isAlnum("abc123!"))
+
+assert.label("Testing with a string containing spaces")
+assert.false(A.isAlnum("abc 123"))
+
+assert.label("Testing with an undefined value")
+assert.true(A.isAlnum(""))
+
+assert.label("Testing with a boolean value")
+assert.true(A.isAlnum(true))
+
+assert.label("Testing with a negative number")
+assert.false(A.isAlnum(-1))
+
+assert.label("Testing with a fraction")
+assert.false(A.isAlnum(0.5))
 
 assert.group(".isArray")
 assert.label("default tests")
 assert.true(A.isArray([1, 2, 3]))
+assert.label("string input")
 assert.false(A.isArray("abc"))
+assert.label("keyed object")
 assert.true(A.isArray({"key": "value"}))
 
 
 ; omit
 assert.false(A.isArray(1))
 assert.false(A.isArray(""))
+
+assert.label("number")
+assert.false(A.isArray(123))
+
+assert.label("boolean")
+assert.false(A.isArray(true))
+
+assert.label("undefined value")
+assert.false(A.isArray(""))
+
+assert.label("object containing an array")
+assert.true(A.isArray({"key": [1, 2, 3]}))
+
+assert.label("array of strings")
+assert.true(A.isArray(["a", "b", "c"]))
+
+assert.label("array of objects")
+assert.true(A.isArray([{"a": 1}, {"b": 2}, {"c": 3}]))
+
+assert.label("nested array")
+assert.true(A.isArray([[1, 2, 3], [4, 5, 6], [7, 8, 9]]))
 
 assert.group(".isBoolean")
 assert.label("default tests")
@@ -1331,14 +1991,22 @@ assert.true(A.isError(Exception("something broke")))
 ; omit
 assert.false(A.isError({"message": "", "what":"", "file":""}))
 
+assert.label("object with blank values")
+assert.true(A.isError({"message": "", "what":"", "file":"", "line": 10}))
+
 assert.group(".isFloat")
 assert.label("default tests")
 assert.true(A.isFloat(1.0))
 assert.false(A.isFloat(1))
 
+
+; omit
+assert.label("negative float")
+assert.true(A.isFloat(-3.14))
+
 assert.group(".isFunction")
 assert.label("default tests")
-boundFunc := Func("strLen").bind()
+boundFunc := func("strLen").bind()
 assert.true(A.isFunction(boundFunc))
 assert.false(IsFunc(boundFunc))
 assert.true(A.isFunction(A.isString))
@@ -1373,15 +2041,19 @@ assert.true(A.isMatch(object, {"b": 2, "c": 3}))
 
 assert.false(A.isMatch(object, {"b": 1}))
 assert.false(A.isMatch(object, {"b": 2, "z": 99}))
+
 assert.group(".isNumber")
 assert.label("default tests")
 assert.true(A.isNumber(1))
 assert.true(A.isNumber("1"))
 assert.true(A.isNumber("1.001"))
 
+
 ; omit
 assert.false(A.isNumber([]))
 assert.false(A.isNumber({}))
+assert.false(A.isNumber(""))
+assert.false(A.isNumber("hello world"))
 
 assert.group(".isObject")
 assert.label("default tests")
@@ -1389,10 +2061,15 @@ assert.true(A.isObject({}))
 assert.true(A.isObject([1, 2, 3]))
 assert.false(A.isObject(""))
 
+
+; omit
+assert.false(A.isObject(42))
+
 assert.group(".isString")
 assert.label("default tests")
 assert.true(A.isString("abc"))
 assert.false(A.isString(1))
+
 
 ; omit
 assert.true(A.isString("1"))
@@ -1417,7 +2094,34 @@ assert.true(A.lt(1, 3))
 assert.false(A.lt(3, 3))
 assert.false(A.lt(3, 1))
 
+
 ; omit
+assert.label("equal numbers")
+assert.false(A.lt(1, 1))
+
+assert.label("smaller first number")
+assert.true(A.lt(1, 2))
+
+assert.label("zero as first number")
+assert.true(A.lt(0, 1))
+
+assert.label("zero as second number")
+assert.false(A.lt(1, 0))
+
+assert.label("negative numbers")
+assert.false(A.lt(-1, -2))
+
+assert.label("negative and positive number")
+assert.true(A.lt(-1, 1))
+
+assert.label("fractions")
+assert.false(A.lt(0.5, 0.2))
+
+assert.label("equal fractions")
+assert.false(A.lt(0.5, 0.5))
+
+assert.label("large numbers")
+assert.false(A.lt(1000000, 999999))
 
 assert.group(".lte")
 assert.label("default tests")
@@ -1426,6 +2130,32 @@ assert.true(A.lte(3, 3))
 assert.false(A.lte(3, 1))
 
 ; omit
+assert.label("equal numbers")
+assert.true(A.lte(1, 1))
+
+assert.label("smaller first number")
+assert.true(A.lte(1, 2))
+
+assert.label("zero as first number")
+assert.true(A.lte(0, 1))
+
+assert.label("zero as second number")
+assert.false(A.lte(1, 0))
+
+assert.label("negative numbers")
+assert.false(A.lte(-1, -2))
+
+assert.label("negative and positive number")
+assert.true(A.lte(-1, 1))
+
+assert.label("fractions")
+assert.false(A.lte(0.5, 0.2))
+
+assert.label("equal fractions")
+assert.true(A.lte(0.5, 0.5))
+
+assert.label("large numbers")
+assert.false(A.lte(1000000, 999999))
 
 assert.group(".toArray")
 assert.label("default tests")
@@ -1437,12 +2167,18 @@ assert.test(A.toArray(""), [])
 ; omit
 assert.test(A.toArray("123"), [1, 2, 3])
 assert.test(A.toArray(99), [])
+assert.test(A.toArray({"a": 1, "b": 2, "c": 3}), [1, 2, 3])
+
 assert.group(".toLength")
 assert.label("default tests")
 assert.test(A.toLength(3.2), 3)
 assert.test(A.toLength("3.2"), 3)
 
+
 ; omit
+assert.test(A.toLength("hello"), 0)
+assert.test(A.toLength([]), 0)
+assert.test(A.toLength({}), 0)
 
 assert.group(".toString")
 assert.label("default tests")
@@ -1460,6 +2196,7 @@ assert.test(A.typeOf(0.25), "float")
 assert.test(A.typeOf("blubber"), "string")
 assert.test(A.typeOf([]), "object")
 assert.test(A.typeOf(undeclaredVariable), "undefined")
+
 
 ; omit
 ; fix to string if ever possible
@@ -1482,6 +2219,7 @@ assert.label("parameter mutation")
 value := 10
 A.add(value, 10)
 assert.test(value, 10)
+
 assert.group(".ceil")
 assert.label("default tests")
 assert.test(A.ceil(4.006), 5)
@@ -1509,6 +2247,8 @@ assert.test(A.divide(6, 4), 1.5)
 ; omit
 assert.test(A.divide(10, -1), -10)
 assert.test(A.divide(-10, -10), 1)
+assert.test(A.divide(0, 5), 0)
+assert.test(A.divide(10, 0), "")
 
 assert.group(".floor")
 assert.label("default tests")
@@ -1529,6 +2269,8 @@ assert.test(A.floor(2.22, 1), 2.2)
 
 assert.test(A.floor(-2.22000000000000020, 2), -2.22)
 assert.test(A.floor(2.22000000000000020, 2), 2.22)
+assert.test(A.floor(4.999), 4)
+
 assert.group(".max")
 assert.label("default tests")
 assert.test(A.max([4, 2, 8, 6]), 8)
@@ -1538,12 +2280,13 @@ assert.test(A.max([]), "")
 ; omit
 assert.label("associative array")
 assert.test(A.max({"foo": 10, "bar": 20}), 20)
+assert.test(A.max([-10, -20, -5]), -5)
 
 assert.group(".maxBy")
 assert.label("default tests")
 objects := [ {"n": 4 }, { "n": 2 }, { "n": 8 }, { "n": 6 } ]
 
-assert.test(A.maxBy(objects, Func("fn_maxByFunc")), { "n": 8 })
+assert.test(A.maxBy(objects, func("fn_maxByFunc")), { "n": 8 })
 fn_maxByFunc(o)
 {
 	return o.n
@@ -1557,6 +2300,11 @@ assert.test(A.maxBy(objects, "n"), { "n": 8 })
 assert.label("default .identity argument")
 assert.test(A.maxBy([0, 1, 2]), 2)
 
+assert.test(A.maxBy(objects, func("fn_maxByNegativeFunc")), { "n": 2 })
+fn_maxByNegativeFunc(o)
+{
+	return -o.n
+}
 assert.group(".mean")
 assert.label("default tests")
 assert.test(A.mean([4, 2, 8, 6]), 5)
@@ -1578,7 +2326,7 @@ assert.test(A.mean([4, 2, , 8, 6]), 4)
 assert.group(".meanBy")
 assert.label("default tests")
 objects := [{"n": 4}, {"n": 2}, {"n": 8}, {"n": 6}]
-assert.test(A.meanBy(objects, Func("fn_meanByFunc")), 5)
+assert.test(A.meanBy(objects, func("fn_meanByFunc")), 5)
 fn_meanByFunc(o)
 {
 	return o.n
@@ -1602,11 +2350,14 @@ assert.test(A.min([]), "")
 assert.label("associative array")
 assert.test(A.min({"foo": 10, "bar": 20}), 10)
 
+assert.label("negative numbers")
+assert.test(A.min([-100, -50, 0, 10]), -100)
+
 assert.group(".minBy")
 assert.label("default tests")
 objects := [ {"n": 4 }, { "n": 2 }, { "n": 8 }, { "n": 6 } ]
 
-assert.test(A.minBy(objects, Func("fn_minByFunc")), { "n": 2 })
+assert.test(A.minBy(objects, func("fn_minByFunc")), { "n": 2 })
 fn_minByFunc(o)
 {
 	return o.n
@@ -1650,6 +2401,8 @@ assert.test(A.subtract(6, 4), 2)
 assert.label("negtive number")
 assert.test(A.subtract(10, -1), 11)
 assert.test(A.subtract(-10, -10), 0)
+assert.test(A.subtract(-6, -4), -2)
+
 
 assert.label("decimal")
 assert.test(A.subtract(10, 0.01), 9.99)
@@ -1668,11 +2421,14 @@ assert.test(A.sum([4, 2, 8, 6]), 20)
 assert.label("associative array")
 assert.test(A.sum({"key1": 4, "key2": 6}), 10)
 
+assert.label("negtive number")
+assert.test(A.sum([-4, 2, -8, 6]), -4)
+
 assert.group(".sumBy")
 assert.label("default tests")
 objects := [ {"n": 4 }, { "n": 2 }, { "n": 8 }, { "n": 6 } ]
 
-assert.test(A.sumBy(objects, Func("fn_sumByFunc")), 20)
+assert.test(A.sumBy(objects, func("fn_sumByFunc")), 20)
 fn_sumByFunc(o)
 {
 	return o.n
@@ -1686,6 +2442,13 @@ assert.test(A.sumBy(objects, "n"), 20)
 assert.label("default .identity argument")
 assert.test(A.sumBy([0, 1, 2]), 3)
 
+assert.label("negative input")
+assert.test(A.sumBy(objects, func("fn_sumByNegativeFunc")), -20)
+fn_sumByNegativeFunc(o)
+{
+    return -o.n
+}
+
 assert.group(".clamp")
 assert.label("default tests")
 assert.test(A.clamp(-10, -5, 5), -5)
@@ -1693,12 +2456,13 @@ assert.test(A.clamp(10, -5, 5), 5)
 
 
 ; omit
-; ensure no change to params
+assert.test(A.clamp(0, -5, 5), 0)
+
+assert.label("parameter mutation")
 var := -10
 assert.test(A.clamp(var, -5, 5), -5)
 assert.test(var, -10)
 
-assert.label("parameter mutation")
 value := 10
 A.clamp(value, -5, 5)
 assert.test(value, 10)
@@ -1715,6 +2479,8 @@ assert.true(A.inRange(-3, -2, -6))
 
 
 ; omit
+assert.true(A.inRange(2, 2, 4))
+assert.false(A.inRange(4, 2, 4))
 
 assert.group(".random")
 assert.label("default tests")
@@ -1724,17 +2490,22 @@ assert.label("default tests")
 output := A.random(0, 1)
 assert.false(isObject(output))
 
-; test that floating point is returned
+assert.label("floating point is returned")
 output := A.random(0, 1, true)
 assert.test(A.includes(output, "."), true)
 
+assert.label("integer is returned")
+output := A.random(0, 1)
+assert.false(A.includes(output, "."))
+
 assert.group(".at")
 assert.label("default tests")
-object := {"a": [{ "b": { "c": 3} }, 4]}
+object := {"a": [{ "b": {"c": 3} }, 4]}
 assert.test(A.at(object, ["a[1].b.c", "a[2]"]), [3, 4])
 
 
 ; omit
+assert.test(A.at(object, ["a[1]", "a[2]"]), [{ "b": {"c": 3} }, 4])
 
 assert.group(".defaults")
 assert.label("default tests")
@@ -1745,6 +2516,7 @@ assert.test(A.defaults({"a": 1}, {"b": 2}, {"a": 3}), {"a": 1, "b": 2})
 object := {"a": 1}
 assert.test(A.defaults(object, {"b": 2, "c": 3}), {"a": 1, "b": 2, "c": 3})
 assert.test(object, {"a": 1})
+assert.test(A.defaults({"a": 1}, {"a": 2}, {"a": 3}), {"a": 1})
 
 assert.group(".findKey")
 assert.label("default tests")
@@ -1752,7 +2524,7 @@ users := { "barney": {"age": 36, "active": true}
 , "fred": {"age": 40, "active": false}
 , "pebbles": {"age": 1, "active": true} }
 
-assert.test(A.findKey(users, Func("fn_findKeyFunc")), "barney")
+assert.test(A.findKey(users, func("fn_findKeyFunc")), "barney")
 fn_findKeyFunc(o)
 {
 	return o.age < 40
@@ -1775,28 +2547,32 @@ assert.test(A.findKey(users, "active", 2), "pebbles")
 assert.group(".forIn")
 assert.label("default tests")
 object := {"a": 1, "b": 2}
-assert.test(A.forIn(object, Func("fn_forInFunc")), {"a": 1, "b": 2})
+assert.test(A.forIn(object, func("fn_forInFunc")), {"a": 1, "b": 2})
 
 fn_forInFunc(value, key) {
 	; msgbox, % key
 }
 
 ; omit
+assert.label("no mutation")
+assert.test(object, {"a": 1, "b": 2})
 
 assert.group(".forInRight")
 assert.label("default tests")
 object := [1, 2, 3]
-assert.test(A.forInRight(object, Func("fn_forInRightFunc")), object)
+assert.test(A.forInRight(object, func("fn_forInRightFunc")), object)
 
 fn_forInRightFunc(value, key) {
 	; msgbox, % value
 }
 
 ; omit
+assert.label("no mutation")
+assert.test(object, [1, 2, 3])
 
 assert.group(".get")
 assert.label("default tests")
-object := {"a": [{ "b": { "c": 3} }]}
+object := {"a": [{ "b": {"c": 3} }]}
 
 assert.test(A.get(object, "a[1].b.c"), 3)
 assert.test(A.get(object, ["a", "1", "b", "c"]), 3)
@@ -1804,6 +2580,7 @@ assert.test(A.get(object, "a.b.c", "default"), "default")
 
 
 ; omit
+assert.test(A.get(object, "a[0]"), [{ "b": {"c": 3} }])
 
 assert.group(".has")
 assert.label("default tests")
@@ -1815,7 +2592,7 @@ assert.true(A.has(object, ["a", "b"]))
 assert.false(A.has(object, "a.b.c"))
 
 ; omit
-assert.label("non-modifying")
+assert.label("no mutation")
 assert.test(object, {"a": { "b": ""}})
 
 assert.group(".invert")
@@ -1827,12 +2604,12 @@ assert.test(A.invert({1: "a", 2: "A"}), {"a": 2})
 
 
 ; omit
-assert.label("do not mutate")
+assert.label("no mutation")
 object := {"a": 1}
 assert.test(A.invert(object), {"1": "a"})
 assert.test(object, {"a": 1})
 
-assert.label("blank object")
+assert.label("empty object")
 assert.test(A.invert({}), {})
 
 assert.group(".invertBy")
@@ -1840,7 +2617,7 @@ assert.label("default tests")
 object := {"a": 1, "b": 2, "c": 1}
 assert.test(A.invertBy(object), {"1": ["a", "c"], "2":["b"]})
 
-assert.test(A.invertBy(object, Func("invertByFunc")), {"group1": ["a", "c"], "group2": ["b"]})
+assert.test(A.invertBy(object, func("invertByFunc")), {"group1": ["a", "c"], "group2": ["b"]})
 invertByFunc(value)
 {
 	return "group" value
@@ -1848,7 +2625,7 @@ invertByFunc(value)
 
 
 ; omit
-assert.label("do not mutate")
+assert.label("no mutation")
 object := {"a": 1}
 assert.test(A.invertBy(object), {1:["a"]})
 assert.test(object, {"a": 1})
@@ -1868,10 +2645,11 @@ assert.test(A.keys("hi"), [1, 2])
 
 
 ; omit
+assert.test(A.keys({"x": 1, "y": 2, "z": 3}), ["x", "y", "z"])
 
 assert.group(".mapKeys")
 assert.label("default tests")
-assert.test(A.mapKeys({"a": 1, "b": 2}, Func("fn_mapKeysFunc")), {"a+1": 1, "b+2": 2})
+assert.test(A.mapKeys({"a": 1, "b": 2}, func("fn_mapKeysFunc")), {"a+1": 1, "b+2": 2})
 fn_mapKeysFunc(value, key)
 {
 	return key "+" value
@@ -1884,12 +2662,13 @@ fn_mapKeysFunc(value, key)
 assert.label("default .identity argument")
 assert.test(A.mapkeys([0, 1, 2]), {"0": 1, "1": 2, "2": 3})
 assert.test(A.mapkeys([1, 2, 3]), [1, 2, 3])
+assert.test(A.mapKeys({"x": 1, "y": 2, "z": 3}, func("fn_mapKeysFunc")), {"x+1": 1, "y+2": 2, "z+3": 3})
 
 assert.group(".mapValues")
 assert.label("default tests")
 users := {"fred": {"user": "fred", "age": 40}
 		,"pebbles": {"user": "pebbles", "age": 1}}
-assert.test(A.mapValues(users, Func("fn_mapValuesFunc")), {"fred": 40, "pebbles": 1})
+assert.test(A.mapValues(users, func("fn_mapValuesFunc")), {"fred": 40, "pebbles": 1})
 fn_mapValuesFunc(o)
 {
 	return o.age
@@ -2257,7 +3036,7 @@ assert.group(".conforms")
 assert.label("default tests")
 objects := [{"a": 2, "b": 1}
 		, {"a": 1, "b": 2}]
-assert.test(A.filter(objects, A.conforms({"b": Func("fn_conformsFunc")})), [{"a": 1, "b": 2}])
+assert.test(A.filter(objects, A.conforms({"b": func("fn_conformsFunc")})), [{"a": 1, "b": 2}])
 
 fn_conformsFunc(n)
 {

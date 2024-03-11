@@ -73,18 +73,22 @@ class biga {
 		}
 		return l_array
 	}
-	depthOf(param_array,param_depth:=1) {
+	depthOf(param_array,param_depth := 1) {
 		if (!isObject(param_array)) {
 			this._internal_ThrowException()
 		}
 
+		max_depth := param_depth
 		for key, value in param_array {
 			if (isObject(value)) {
-				param_depth++
-				param_depth := this.depthOf(value, param_depth)
+				; Increment depth for nested objects
+				depth := this.depthOf(value, param_depth + 1)
+				; Update max_depth if necessary
+				max_depth := this.max([depth, max_depth])
 			}
 		}
-		return param_depth
+
+		return max_depth
 	}
 	difference(param_array,param_values*) {
 		if (!isObject(param_array)) {
@@ -292,6 +296,10 @@ class biga {
 		if (!isObject(param_array)) {
 			this._internal_ThrowException()
 		}
+		; validate
+		if (param_array == [] || param_depth <= 0) {
+			return param_array
+		}
 
 		; prepare
 		l_obj := this.cloneDeep(param_array)
@@ -484,26 +492,37 @@ class biga {
 		}
 		return l_array
 	}
-	slice(param_array,param_start:=1,param_end:=0) {
-		if (!this.isNumber(param_start)) {
-			this._internal_ThrowException()
-		}
-		if (!this.isNumber(param_end)) {
+	slice(param_array,param_start:=0,param_end:=0) {
+		if (!this.isNumber(param_start) || !this.isNumber(param_end)) {
 			this._internal_ThrowException()
 		}
 
 		; prepare
+		l_array := []
 		if (this.isStringLike(param_array)) {
 			param_array := strSplit(param_array)
 		}
-		if (param_end == 0) {
-			param_end := param_array.count()
+
+		; parameter adjustment
+		if (param_start > 0) {
+			begin := param_start
+		} else if (param_start < 0) {
+			begin := param_array.count() + param_start + 1
+		} else {
+			begin := 1
 		}
-		l_array := []
+
+		if (param_end > 0) {
+			last := param_end
+		} else if (param_end < 0) {
+			last := param_array.count() + param_end
+		} else {
+			last := param_array.count()
+		}
 
 		; create
-		for key, value in param_array {
-			if (A_Index >= param_start && A_Index <= param_end) {
+		for index, value in param_array {
+			if (index >= begin && index <= last) {
 				l_array.push(value)
 			}
 		}
@@ -660,8 +679,8 @@ class biga {
 
 		; create
 		for i, val in param_values {
-			while (foundindex := this.indexOf(l_array, val) != -1) {
-				l_array.removeAt(foundindex)
+			while ((foundIndex := this.indexOf(l_array, val)) != -1) {
+				l_array.removeAt(foundIndex)
 			}
 		}
 		return l_array
@@ -1159,7 +1178,7 @@ class biga {
 			return this._internal_sort(param_collection)
 		}
 		; property
-		if (this.isString(param_iteratees)) {
+		if (this.isStringLike(param_iteratees)) {
 			return this._internal_sort(param_collection, param_iteratees)
 		}
 		; own method or function
@@ -1239,6 +1258,9 @@ class biga {
 	}
 
 	_internal_ary(param_func, param_n, param_args*) {
+		if (param_n == 0) {
+			return param_func.call()
+		}
 		param_args := this.slice(param_args, 1, param_n)
 		return param_func.call(param_args*)
 	}
@@ -1277,7 +1299,7 @@ class biga {
 	; Internal functions
 	; \--/--\--/--\--/--\--/--\--/
 
-	_internal_MD5(param_string, case := 0) {
+	_internal_MD5(param_string,case:=0) {
 		if (isObject(param_string)) {
 			param_string := this._internal_stringify(param_string)
 		}
@@ -1287,10 +1309,10 @@ class biga {
 		, dllCall("advapi32\MD5Update", "ptr", &MD5_CTX, "AStr", param_string, "UInt", strLen(param_string))
 		, dllCall("advapi32\MD5Final", "ptr", &MD5_CTX)
 		loop % digestLength {
-			o .= format("{:02" (case ? "X" : "x") "}", numGet(MD5_CTX, 87 + A_Index, "UChar"))
+			output .= format("{:02" (case ? "X" : "x") "}", numGet(MD5_CTX, 87 + A_Index, "UChar"))
 		}
 		dllCall("freelibrary", "ptr", hModule)
-		return o
+		return output
 	}
 
 	_internal_JSRegEx(param_string) {
@@ -1551,7 +1573,7 @@ class biga {
 		return false
 	}
 	isFunction(param) {
-		funcRefrence := numGet(&(_ := Func("inStr").bind()), "ptr")
+		funcRefrence := numGet(&(_ := func("inStr").bind()), "ptr")
 		return (isFunc(param) || (isObject(param) && (numGet(&param, "ptr") = funcRefrence)))
 	}
 	isInteger(param) {
@@ -1636,6 +1658,9 @@ class biga {
 	toLength(param_value) {
 
 		; create
+		if (!this.isNumber(param_value)) {
+			return 0
+		}
 		return this.floor(param_value)
 	}
 	toString(param_value) {
@@ -1667,27 +1692,29 @@ class biga {
 		; create
 		return param_augend + param_addend
 	}
-	ceil(param_number,param_precision:=0) {
+	ceil(param_number, param_precision := 0) {
+		; Check if parameters are numbers
 		if (!this.isNumber(param_number) || !this.isNumber(param_precision)) {
 			this._internal_ThrowException()
 		}
-
-		if (param_precision == 0) { ; regular ceil
+		; Regular ceil if precision is 0
+		if (param_precision == 0) {
 			return ceil(param_number)
 		}
 
-		l_offset := 0.5 / (10**param_precision)
+		; create
+		l_offset := 0.5 / (10 ** param_precision)
 		if (param_number < 0 && param_precision >= 1) {
-			l_offset /= 10 ; adjust offset for negative numbers and positive param_precision
+			; Adjust offset for negative numbers and positive param_precision
+			l_offset /= 10
 		}
-		if (param_precision >= 1) {
-			l_decChar := strLen( substr(param_number, inStr(param_number, ".") + 1) ) ; count the number of decimal characters
-			l_sum := format("{:." this.max([l_decChar, param_precision]) + 1 "f}", param_number + l_offset)
-		} else {
-			l_sum := param_number + l_offset
-		}
-		l_sum := trim(l_sum, "0") ; trim zeroes
-		l_value := (subStr(l_sum, 0) = "5") && param_number != l_sum ? subStr(l_sum, 1, -1) : l_sum ; if last char is 5 then remove it unless it is part of the original string
+		; Calculate sum based on precision
+		l_sum := (param_precision >= 1)
+				? format("{:." this.max([strLen(subStr(param_number, inStr(param_number, ".") + 1)), param_precision]) + 1 "f}", param_number + l_offset)
+				: param_number + l_offset
+		; Trim zeroes and adjust value based on last char
+		l_sum := trim(l_sum, "0")
+		l_value := (subStr(l_sum, 0) = "5" && param_number != l_sum) ? subStr(l_sum, 1, -1) : l_sum
 		return round(l_value, param_precision)
 	}
 	divide(param_dividend,param_divisor) {
@@ -1744,14 +1771,13 @@ class biga {
 		if (shorthand) {
 			param_iteratee := this._internal_createShorthandfn(param_iteratee, param_array)
 		}
-		l_max := 0
 
 		for key, value in param_array {
 			; functor
 			if (this.isFunction(param_iteratee)) {
 				l_iteratee := param_iteratee.call(value)
 			}
-			if (l_iteratee > l_max) {
+			if (l_iteratee > l_max || this.isUndefined(l_max)) {
 				l_max := l_iteratee
 				l_return := value
 			}
@@ -1793,7 +1819,6 @@ class biga {
 			this._internal_ThrowException()
 		}
 
-		l_min := ""
 		for key, value in param_array {
 			if (value < l_min || this.isUndefined(l_min)) {
 				l_min := value
@@ -1811,7 +1836,6 @@ class biga {
 		if (shorthand) {
 			param_iteratee := this._internal_createShorthandfn(param_iteratee, param_array)
 		}
-		l_min := ""
 
 		for key, value in param_array {
 			; functor
@@ -1847,8 +1871,7 @@ class biga {
 		}
 
 		; create
-		param_minuend -= param_subtrahend
-		return param_minuend
+		return param_minuend - param_subtrahend
 	}
 	sum(param_array) {
 		if (!isObject(param_array)) {
@@ -1915,7 +1938,7 @@ class biga {
 		}
 
 		; perform
-		if (param_number > param_start && param_number < param_end) {
+		if (param_number >= param_start && param_number < param_end) {
 			return true
 		}
 		return false
@@ -1940,7 +1963,7 @@ class biga {
 		random, vRandom, param_lower, param_upper
 		return vRandom
 	}
-	at(param_object,param_paths,param_defaultValue:="") {
+	at(param_object,param_paths) {
 		if (!isObject(param_object)) {
 			this._internal_ThrowException()
 		}
@@ -1950,7 +1973,10 @@ class biga {
 
 		; create
 		for key, value in param_paths {
-			l_array.push(this.get(param_object, value))
+			val := this.get(param_object, value)
+			if (val != "") {
+				l_array.push(val)
+			}
 		}
 		return l_array
 	}
@@ -2025,11 +2051,8 @@ class biga {
 			this._internal_ThrowException()
 		}
 
-		; prepare
-		l_object := this.reverse(param_object)
-
 		; create
-		this.forIn(l_object, param_iteratee)
+		this.forIn(this.reverse(param_object), param_iteratee)
 		return param_object
 	}
 	get(param_object,param_path,param_defaultValue:="") {
@@ -2043,7 +2066,11 @@ class biga {
 		}
 
 		; create
-		returnValue := param_object[param_path*]
+		if (isObject(param_object[param_path*])) {
+			returnValue := param_object[param_path*].clone()
+		} else {
+			returnValue := param_object[param_path*]
+		}
 		if (returnValue == "") {
 			returnValue := param_defaultValue
 		}
@@ -2407,7 +2434,7 @@ class biga {
 		}
 
 		; create
-		l_pad := this.slice(param_chars)
+		l_pad := strSplit(param_chars)
 		l_string := param_string
 		while (strLen(l_string) < param_length) {
 			l_pos++
@@ -2429,7 +2456,7 @@ class biga {
 		}
 
 		; create
-		l_pad := this.slice(param_chars)
+		l_pad := strSplit(param_chars)
 		while (strLen(param_string) + strLen(l_padding) < param_length) {
 			l_pos++
 			if (l_pos > l_pad.count()) {
